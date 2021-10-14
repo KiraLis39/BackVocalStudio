@@ -88,26 +88,29 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
 //            g2D.dispose();
         }
 
+        Color justExistColor = new Color(1.0f, 0.8f, 0.25f, 0f);
+        Color existAndPlayedColor = new Color(0.0f, 1.0f, 0.0f, 0f);
+
         // oval:
         float opacity = 0.75f;
         if (playpane == null || playpane.isEmpty()) {
             g2D.setColor(new Color(0.35f, 0.35f, 0.35f, opacity));
-            g2D.fillRoundRect(getWidth() - 28, 6, 20, 13, 9, 9);
         } else {
             opacity = 0f;
+            Color drawColor = isPlaying ? existAndPlayedColor : justExistColor;
 
             for (int i = 0; i < 10; i++) {
                 opacity += 0.07;
                 if (opacity > 1f) {opacity = 1f;}
-                g2D.setColor(new Color(1.0f, 0.8f, 0.3f, opacity));
+                g2D.setColor(new Color(drawColor.getRed() / 255f, drawColor.getGreen() / 255f, drawColor.getBlue() / 255f, opacity));
                 g2D.fillRoundRect(getWidth() - 33 + i, 3 + (i), (int) (30.5f - (i * 2)), 19 - (i * 2), 15, 15);
             }
 
             opacity = 1f;
-            g2D.setColor(new Color(1.0f, 0.8f, 0.25f, opacity));
-            g2D.fillRoundRect(getWidth() - 28, 6, 20, 13, 9, 9);
+            g2D.setColor(drawColor);
 
         }
+        g2D.fillRoundRect(getWidth() - 28, 6, 20, 13, 9, 9);
 
         recolor();
     }

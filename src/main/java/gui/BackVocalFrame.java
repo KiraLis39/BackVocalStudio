@@ -64,6 +64,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
     public BackVocalFrame() {
         frame = this;
         sdf.setTimeZone(TimeZone.getDefault());
+        String today = weakday.format(new Date());
 
         Out.Print("Build the frame...");
 
@@ -97,7 +98,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                     }
                 };
 
-                rightInfoPane = new JPanel(new GridLayout(21, 1,0,0)) {
+                rightInfoPane = new JPanel(new GridLayout(18, 1,0,0)) {
                     {
                         setBackground(Color.BLACK);
                         setBorder(new EmptyBorder(3,3,0,0));
@@ -363,7 +364,6 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
 
             executor = Executors.newFixedThreadPool(2);
             executor.execute(() -> {
-                String today = weakday.format(new Date());
 
                 while (true) {
                     try {
@@ -386,11 +386,13 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
 
                         }
                     } catch (Exception e) {
+                        Out.Print(getClass(), Out.LEVEL.WARN, "Exception into play executor: " + e.getMessage());
                         e.printStackTrace();
                     }
 
                     try {Thread.sleep(1000);
                     } catch (InterruptedException e) {
+                        Out.Print("Play executor was interrupted.");
                         Thread.currentThread().interrupt();
                     }
                 }
@@ -401,6 +403,8 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                 while (true) {
                     try {
                         for (PlayDataItem weakdayItem : getWeekdayItems()) {
+                            if (!weakdayItem.getName().equalsIgnoreCase(today)) {continue;}
+
                             String time;
                             ArrayList<AlarmItem> ail = weakdayItem.getAlarmData();
                             for (AlarmItem s : ail) {
@@ -421,13 +425,14 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                         }
 
                     } catch (Exception e) {
+                        Out.Print(getClass(), Out.LEVEL.WARN, "Exception into alarms executor: " + e.getMessage());
                         e.printStackTrace();
                     }
 
                     currentTime.setText("<html>Now: <b color='YELLOW'>" + sdf.format(System.currentTimeMillis()) + "</b></html>");
                     try {Thread.sleep(1000);
                     } catch (InterruptedException e) {
-                        Out.Print("Play control executor was interrupted.");
+                        Out.Print("Alarms executor was interrupted.");
                         Thread.currentThread().interrupt();
                     }
                 }
@@ -437,7 +442,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
 //                System.out.println("AWAIT");
 //            }
         } catch (Exception e) {
-            Out.Print("Executor loading exception: " + e.getMessage());
+            Out.Print(getClass(), Out.LEVEL.WARN, "Executors loading exception: " + e.getMessage());
         }
 
         playProgress.setPreferredSize(new Dimension(frame.getWidth() / 3, 27));
@@ -462,7 +467,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
             }}, BorderLayout.NORTH);
             centerPlaylistsPane.add(playpane, BorderLayout.CENTER);
 
-            Out.Print("The playlist named '" + playpane.getName() + "' was added to CENTER.");
+            Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "The playlist named '" + playpane.getName() + "' was added to CENTER.");
         }
 
         playListsScroll.repaint();
@@ -567,7 +572,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
         playProgress.setIndeterminate(true);
 
         for (String day : days) {
-            Out.Print("\nTry to load the day '" + day + "'...");
+            Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "Try to load the day '" + day + "'...");
 
             try {
                 // META loading:
@@ -589,12 +594,12 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                         Path track = Paths.get(alarm.split(">")[1]);
 
                         if (Files.notExists(track)) {
-                            Out.Print("Alarm file not exist:", Out.LEVEL.WARN);
+                            Out.Print(BackVocalFrame.class, Out.LEVEL.WARN, "Alarm file not exist:");
                         } else {
                             if (time.length() == 8) {
                                 dayItems[daysCounter].addAlarm(time, track);
                             } else {
-                                Out.Print("Time is not correct: " + time, Out.LEVEL.WARN);
+                                Out.Print(BackVocalFrame.class, Out.LEVEL.WARN, "Time is not correct: " + time);
                             }
                         }
                     } catch (Exception e) {
@@ -666,7 +671,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
     }
 
     private void tray() throws AWTException {
-        Out.Print("Tray the frame...");
+        Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "Tray the frame...");
 
         frame.dispose();
         tray.add(trayIcon);
@@ -674,7 +679,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
     }
 
     private void detray() {
-        Out.Print("De-Tray the frame...");
+        Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "De-Tray the frame...");
         BackVocalFrame.this.setVisible(true);
         BackVocalFrame.this.setState(JFrame.NORMAL);
         tray.remove(trayIcon);
@@ -696,7 +701,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
     // Listeners:
     @Override
     public void windowOpened(WindowEvent e) {
-    	Out.Print("The frame is open now.");
+    	Out.Print(BackVocalFrame.class, Out.LEVEL.INFO, "The frame is open now.");
     }
 
     @Override
@@ -711,7 +716,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
 
     @Override
     public void windowClosed(WindowEvent e) {
-        Out.Print("Frame is closed now.");
+        Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "Frame is closed now.");
     }
 
     @Override

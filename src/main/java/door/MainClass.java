@@ -31,9 +31,10 @@ public class MainClass {
             buildIOM();
 
             Out.setEnabled(IOM.getBoolean(IOM.HEADERS.CONFIG, IOMs.CONFIG.OUTLOG_ENABLED));
-            Out.setLogsCoutAllow(3);
+            Out.setLogsCoutAllow(5);
 
             Out.Print("Start!");
+            Out.setErrorLevel(Out.LEVEL.ACCENT);
 
             loadUIM();
 
@@ -47,7 +48,7 @@ public class MainClass {
 
 
     private static void loadUIM() {
-        Out.Print("Set the UIManagers view.");
+        Out.Print(MainClass.class, Out.LEVEL.DEBUG, "Set the UIManagers view.");
 
         try {
             UIManager.setLookAndFeel(new NimbusLookAndFeel());

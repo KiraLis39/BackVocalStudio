@@ -48,7 +48,7 @@ public class PlayPane extends JPanel implements iPlayList {
 
         indexGlobalCounter = 0;
         for (Path path : tracks) {
-            Out.Print("Was added to playlist the track: " + path);
+            Out.Print("Was added to playlist the track: " + path, Out.LEVEL.DEBUG);
             indexGlobalCounter++;
             dlm.addElement(new ListRow(this, indexGlobalCounter, new File("./resources/icons/0.png"), path));
         }

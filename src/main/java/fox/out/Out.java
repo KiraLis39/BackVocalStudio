@@ -221,10 +221,11 @@ public class Out {
 			}
 			
 			if (LogThread == null) {start();}
+
+			typeDeque.addFirst(level);
+			messageStack.insertElementAt(address + ": " + message, 0);
+
 			if (level.ordinal() >= errLevel.ordinal()) {
-				typeDeque.addFirst(level);
-				messageStack.insertElementAt(address + ": " + message, 0);
-				
 				if (level == LEVEL.ERROR || level == LEVEL.WARN) {System.err.println(resultString);				
 				} else {System.out.println(resultString);}
 			}
