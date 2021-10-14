@@ -1,5 +1,6 @@
 package fox.components;
 
+import fox.out.Out;
 import javazoom.jl.decoder.Bitstream;
 import javazoom.jl.decoder.BitstreamException;
 import javazoom.jl.decoder.Header;
@@ -25,6 +26,7 @@ public class ListRow extends JPanel implements Comparator<ListRow> {
     public ListRow(PlayPane owner, int count, File iconFile, Path trackPath) {
         try {icon = ImageIO.read(iconFile);
         } catch (IOException e) {
+            Out.Print(ListRow.class, Out.LEVEL.WARN, "Icon of each tracks line not found!");
             e.printStackTrace();
         }
 

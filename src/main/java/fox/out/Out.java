@@ -31,7 +31,7 @@ public class Out {
 	private static String currentDate, currentTime, address;
 	
 	private static int logCount = 0; // счетчик сообщений в логе
-	private static int sleepTime = 250;
+	private static int sleepTime = 100;
 	private static int logsCountAllow = 10;	// сколько логов хранить по-умолчанию
 
 	
@@ -160,10 +160,8 @@ public class Out {
 			osw.write("</p></font>\n");
 		} catch (Exception de) {
 			System.err.println(de.getMessage());
-			try {
-				OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(HTMLlog, true), charset);
+			try (OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(HTMLlog, true), charset)) {
 				osw.write("<font color='#bf4c28'><h3>FoxLogger exception: " + de.getMessage());
-				osw.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

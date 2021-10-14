@@ -41,16 +41,17 @@ public class PlayPane extends JPanel implements iPlayList {
             Out.Print("tracks is empty so return...");
             return;
         }
-        Out.Print("Reloading playlist to " + tracks.size() + " files mp3.");
 
         removeAll();
         dlm.clear();
 
-        indexGlobalCounter = 0;
+        Out.Print(PlayPane.class, Out.LEVEL.DEBUG, "Reloading playlist '" + getName() + "' with " + tracks.size() + " files mp3.");
+        indexGlobalCounter = 1;
+        File trackIco = new File("./resources/icons/0.png");
         for (Path path : tracks) {
 //            Out.Print("Was added to playlist the track: " + path, Out.LEVEL.DEBUG);
             try {
-                dlm.addElement(new ListRow(this, indexGlobalCounter, new File("./resources/icons/0.png"), path));
+                dlm.addElement(new ListRow(this, indexGlobalCounter, trackIco, path));
                 indexGlobalCounter++;
             } catch (Exception e) {
                 e.printStackTrace();
