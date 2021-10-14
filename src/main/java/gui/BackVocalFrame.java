@@ -179,7 +179,14 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
 
                                                 int result = fch.showOpenDialog(BackVocalFrame.this);
                                                 if (result == JFileChooser.APPROVE_OPTION) {
-                                                    getSelectedItem().getPlayPane().setTracks(fch.getSelectedFiles());
+                                                    ArrayList<Path> res = new ArrayList<>();
+                                                    for (File selectedFile : fch.getSelectedFiles()) {
+                                                        if (selectedFile.getName().endsWith(".mp3")) {
+                                                            res.add(selectedFile.toPath());
+                                                        }
+                                                    }
+
+                                                    getSelectedItem().getPlayPane().setTracks(res);
                                                 } else {
                                                     System.out.println("Dir was not chousen...");
                                                 }
