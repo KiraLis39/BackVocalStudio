@@ -5,7 +5,7 @@ import fox.utils.CustomList;
 import fox.utils.MyCellRenderer;
 import fox.utils.iPlayList;
 import gui.BackVocalFrame;
-import gui.PlayDataItem;
+import gui.PlayDataItemMy;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,10 +26,10 @@ public class PlayPane extends JPanel implements iPlayList {
     private ArrayList<Path> tracks = new ArrayList<>();
     private DefaultListModel<ListRow> dlm = new DefaultListModel();
     private CustomList<ListRow> playList;
-    private PlayDataItem owner;
+    private PlayDataItemMy owner;
 
 
-    public PlayPane(PlayDataItem player) {
+    public PlayPane(PlayDataItemMy player) {
         this.owner = player;
         setName(player.getName());
         setLayout(new BorderLayout(0,0));
@@ -48,9 +48,14 @@ public class PlayPane extends JPanel implements iPlayList {
 
         indexGlobalCounter = 0;
         for (Path path : tracks) {
-            Out.Print("Was added to playlist the track: " + path, Out.LEVEL.DEBUG);
-            indexGlobalCounter++;
-            dlm.addElement(new ListRow(this, indexGlobalCounter, new File("./resources/icons/0.png"), path));
+//            Out.Print("Was added to playlist the track: " + path, Out.LEVEL.DEBUG);
+            try {
+                dlm.addElement(new ListRow(this, indexGlobalCounter, new File("./resources/icons/0.png"), path));
+                indexGlobalCounter++;
+            } catch (Exception e) {
+                e.printStackTrace();
+                Out.Print(PlayPane.class, Out.LEVEL.WARN, "Exception by loading track: " + e.getMessage() + ". ('" + path + ";)");
+            }
         }
 
         playList = new CustomList(dlm, PlayPane.this) {
@@ -213,5 +218,5 @@ public class PlayPane extends JPanel implements iPlayList {
         dlm.clear();
     }
 
-    public PlayDataItem getOwner() {return owner;}
+    public PlayDataItemMy getOwner() {return owner;}
 }

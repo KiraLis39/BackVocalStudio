@@ -1,19 +1,22 @@
 plugins {
     id 'java'
+    id 'idea'
 }
 
-group 'org.example'
+//group 'ru.bvs'
 version '1.0-SNAPSHOT'
-sourceCompatibility = '11'
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
+
+jar {
+    archiveFileName = 'BackVocalStudio.jar'
+}
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
 dependencies {
     implementation files('lib/JLayer1.0.1.39.jar')
-}
-
-test {
-    useJUnitPlatform()
 }

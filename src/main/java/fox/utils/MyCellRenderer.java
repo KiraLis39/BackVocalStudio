@@ -2,7 +2,6 @@ package fox.utils;
 
 import fox.components.ListRow;
 import fox.fb.FoxFontBuilder;
-import fox.utils.CustomList;
 
 import javax.swing.*;
 import java.awt.*;

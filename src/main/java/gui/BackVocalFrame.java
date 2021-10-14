@@ -1,32 +1,29 @@
 package gui;
 
+import door.MainClassMy;
 import fox.components.AlarmItem;
 import fox.components.ListRow;
 import fox.components.PlayPane;
-import door.MainClass;
 import fox.fb.FoxFontBuilder;
 import fox.out.Out;
-import fox.utils.VerticalFlowLayout;
-import registry.Codes;
-import registry.Registry;
+import registry.CodesMy;
+import registry.RegistryMy;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.plaf.basic.BasicToolBarUI;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.util.*;
 import java.awt.event.*;
 import java.nio.charset.MalformedInputException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -46,8 +43,8 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
     private static JFileChooser fch = new JFileChooser("./resources/audio/");
     private static JToolBar toolBar;
 
-    private static PlayDataItem[] dayItems = new PlayDataItem[7];
-    private static String[] days = new String[] {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
+    private static PlayDataItemMy[] dayItems = new PlayDataItemMy[7];
+    private static String[] days = new String[]{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
 
     private static Font headersFontSmall = FoxFontBuilder.setFoxFont(FoxFontBuilder.FONT.ARIAL_NARROW, 14, true);
     private static Font btnsFont = FoxFontBuilder.setFoxFont(FoxFontBuilder.FONT.ARIAL_NARROW, 14, false);
@@ -68,18 +65,19 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
 
         Out.Print("Build the frame...");
 
-        try {setIconImage(new ImageIcon(ImageIO.read(new File("./resources/icons/0.png"))).getImage());
+        try {
+            setIconImage(new ImageIcon(ImageIO.read(new File("./resources/icons/0.png"))).getImage());
         } catch (IOException e) {
             e.printStackTrace();
         }
-        setTitle("Back vocal studio v." + Registry.version);
+        setTitle("Back vocal studio v." + RegistryMy.version);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
-        basePane = new JPanel(new BorderLayout(3,3)) {
+        basePane = new JPanel(new BorderLayout(1, 3)) {
             {
                 setBackground(Color.BLACK);
 
-                centerPlaylistsPane = new JPanel(new BorderLayout(3,3)) {
+                centerPlaylistsPane = new JPanel(new BorderLayout(3, 3)) {
                     {
                         setOpaque(false);
                     }
@@ -98,20 +96,44 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                     }
                 };
 
-                rightInfoPane = new JPanel(new GridLayout(18, 1,0,0)) {
+                rightInfoPane = new JPanel(new GridLayout(18, 1, 0, 0)) {
                     {
                         setBackground(Color.BLACK);
-                        setBorder(new EmptyBorder(3,3,0,0));
+                        setBorder(new EmptyBorder(3, 3, 0, 0));
 
-                        add(new JLabel("<Track info>") {{setForeground(Color.WHITE); setFont(infoFont0); setHorizontalAlignment(JLabel.CENTER);}});
-                        currentTime = new JLabel(sdf.format(System.currentTimeMillis())) {{setForeground(Color.WHITE); setFont(infoFont0); setHorizontalAlignment(JLabel.LEFT);}};
+                        add(new JLabel("<Track info>") {{
+                            setForeground(Color.WHITE);
+                            setFont(infoFont0);
+                            setHorizontalAlignment(JLabel.CENTER);
+                        }});
+                        currentTime = new JLabel(sdf.format(System.currentTimeMillis())) {{
+                            setForeground(Color.WHITE);
+                            setFont(infoFont0);
+                            setHorizontalAlignment(JLabel.LEFT);
+                        }};
                         add(currentTime);
                         add(new JSeparator());
 
-                        selTrackName = new JLabel() {{setForeground(Color.WHITE); setFont(infoFont0); setHorizontalAlignment(JLabel.LEFT);}};
-                        selTrackPath = new JLabel() {{setForeground(Color.WHITE); setFont(infoFont0); setHorizontalAlignment(JLabel.LEFT);}};
-                        selTrackDuration = new JLabel() {{setForeground(Color.WHITE); setFont(infoFont0); setHorizontalAlignment(JLabel.LEFT);}};
-                        selTrackSize = new JLabel() {{setForeground(Color.WHITE); setFont(infoFont0); setHorizontalAlignment(JLabel.LEFT);}};
+                        selTrackName = new JLabel() {{
+                            setForeground(Color.WHITE);
+                            setFont(infoFont0);
+                            setHorizontalAlignment(JLabel.LEFT);
+                        }};
+                        selTrackPath = new JLabel() {{
+                            setForeground(Color.WHITE);
+                            setFont(infoFont0);
+                            setHorizontalAlignment(JLabel.LEFT);
+                        }};
+                        selTrackDuration = new JLabel() {{
+                            setForeground(Color.WHITE);
+                            setFont(infoFont0);
+                            setHorizontalAlignment(JLabel.LEFT);
+                        }};
+                        selTrackSize = new JLabel() {{
+                            setForeground(Color.WHITE);
+                            setFont(infoFont0);
+                            setHorizontalAlignment(JLabel.LEFT);
+                        }};
 
                         add(selTrackName);
                         add(selTrackPath);
@@ -126,7 +148,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
 
                         toolBar = new JToolBar("Still draggable") {
                             {
-                                setBorder(new EmptyBorder(0,0,1,0));
+                                setBorder(new EmptyBorder(0, 0, 1, 0));
 
                                 moveUpBtn = new JButton("Move it Up") {
                                     {
@@ -154,7 +176,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                                                 fch.setDialogTitle("Choose tracks:");
 
                                                 int result = fch.showOpenDialog(BackVocalFrame.this);
-                                                if (result == JFileChooser.APPROVE_OPTION ) {
+                                                if (result == JFileChooser.APPROVE_OPTION) {
                                                     getSelectedItem().getPlayPane().setTracks(fch.getSelectedFiles());
                                                 } else {
                                                     System.out.println("Dir was not chousen...");
@@ -171,7 +193,9 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                                         addActionListener(new ActionListener() {
                                             @Override
                                             public void actionPerformed(ActionEvent e) {
-                                                if (getSelectedItem().getPlayPane().getSelectedIndex() == -1) {return;}
+                                                if (getSelectedItem().getPlayPane().getSelectedIndex() == -1) {
+                                                    return;
+                                                }
 
                                                 int req = JOptionPane.showConfirmDialog(null,
                                                         "Delete track #" + (getSelectedItem().getPlayPane().getSelectedIndex() + 1) + "?",
@@ -224,7 +248,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                             }
                         };
 
-                        playDatePane = new JPanel(new GridLayout(1, 7, 1,0)) {
+                        playDatePane = new JPanel(new GridLayout(1, 7, 1, 0)) {
                             {
                                 setBackground(Color.BLACK);
                                 setBorder(null);
@@ -234,7 +258,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                         playDateScroll = new JScrollPane(playDatePane) {
                             {
                                 setBorder(null);
-                                setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+                                setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
                                 setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
                                 getVerticalScrollBar().setUnitIncrement(16);
                             }
@@ -243,12 +267,12 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                         JPanel downPane = new JPanel(new BorderLayout()) {
                             {
                                 setOpaque(false);
-                                setBorder(new EmptyBorder(1,0,0,0));
+                                setBorder(new EmptyBorder(1, 0, 0, 0));
 
                                 downBtnsPane = new JPanel(new FlowLayout(0, 3, 3)) {
                                     {
                                         setBackground(Color.DARK_GRAY);
-                                        setBorder(new EmptyBorder(0,0,1,0));
+                                        setBorder(new EmptyBorder(0, 0, 1, 0));
 
                                         bindListBtn = new JButton("Bind to dir") {
                                             {
@@ -355,7 +379,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
 
         loadDays();
 
-        setMinimumSize(new Dimension(dayItems[0].getWidth() * 7 + 48, 700));
+        setMinimumSize(new Dimension(dayItems[0].getWidth() * 7, 600));
         setLocationRelativeTo(null);
         repaint();
 
@@ -367,8 +391,10 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
 
                 while (true) {
                     try {
-                        for (PlayDataItem weakdayItem : getWeekdayItems()) {
-                            if (!weakdayItem.getName().equalsIgnoreCase(today)) {continue;}
+                        for (PlayDataItemMy weakdayItem : getWeekdayItems()) {
+                            if (!weakdayItem.getName().equalsIgnoreCase(today)) {
+                                continue;
+                            }
 
                             if (!weakdayItem.inSchedulingTimeAccept()) {
                                 if (weakdayItem.isPlayed()) {
@@ -376,7 +402,9 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                                     JOptionPane.showConfirmDialog(BackVocalFrame.this, "Timer out! Music has stopped.", "Timer out:", JOptionPane.DEFAULT_OPTION);
                                 }
                             } else {
-                                if (weakdayItem.getPlayPane().isEmpty()) {continue;}
+                                if (weakdayItem.getPlayPane().isEmpty()) {
+                                    continue;
+                                }
 
                                 if (!weakdayItem.isPlayed() && !weakdayItem.isPaused() && !weakdayItem.isHandStopped()) {
                                     weakdayItem.play();
@@ -390,7 +418,8 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                         e.printStackTrace();
                     }
 
-                    try {Thread.sleep(1000);
+                    try {
+                        Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         Out.Print("Play executor was interrupted.");
                         Thread.currentThread().interrupt();
@@ -398,17 +427,21 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                 }
             });
             executor.execute(() -> {
-                Out.Print("== Launch time is: <" + sdf.format(System.currentTimeMillis() - MainClass.getStartTime()) + "> ==");
+                Out.Print("== Launch time is: <" + sdf.format(System.currentTimeMillis() - MainClassMy.getStartTime()) + "> ==");
 
                 while (true) {
                     try {
-                        for (PlayDataItem weakdayItem : getWeekdayItems()) {
-                            if (!weakdayItem.getName().equalsIgnoreCase(today)) {continue;}
+                        for (PlayDataItemMy weakdayItem : getWeekdayItems()) {
+                            if (!weakdayItem.getName().equalsIgnoreCase(today)) {
+                                continue;
+                            }
 
                             String time;
                             ArrayList<AlarmItem> ail = weakdayItem.getAlarmData();
                             for (AlarmItem s : ail) {
-                                if (s.isWasPlayed()) {continue;}
+                                if (s.isWasPlayed()) {
+                                    continue;
+                                }
 
                                 time = s.getTime();
                                 if (weakdayItem.isTimeCome(time)) {
@@ -430,7 +463,8 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                     }
 
                     currentTime.setText("<html>Now: <b color='YELLOW'>" + sdf.format(System.currentTimeMillis()) + "</b></html>");
-                    try {Thread.sleep(1000);
+                    try {
+                        Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         Out.Print("Alarms executor was interrupted.");
                         Thread.currentThread().interrupt();
@@ -444,14 +478,11 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
         } catch (Exception e) {
             Out.Print(getClass(), Out.LEVEL.WARN, "Executors loading exception: " + e.getMessage());
         }
-
-        playProgress.setPreferredSize(new Dimension(frame.getWidth() / 3, 27));
-        rightInfoPane.setPreferredSize(new Dimension(350, 0));
     }
 
     public static void resetDownPaneSelect() {
         Out.Print("Reset frame panels selections...");
-        for (PlayDataItem comp : getWeekdayItems()) {
+        for (PlayDataItemMy comp : getWeekdayItems()) {
             comp.setSelected(false);
         }
     }
@@ -474,12 +505,12 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
         playListsScroll.revalidate();
     }
 
-    public static ArrayList<PlayDataItem> getWeekdayItems() {
-        ArrayList<PlayDataItem> result = new ArrayList<>(7);
+    public static ArrayList<PlayDataItemMy> getWeekdayItems() {
+        ArrayList<PlayDataItemMy> result = new ArrayList<>(7);
 
         for (Component comp : playDatePane.getComponents()) {
-            if (comp instanceof PlayDataItem) {
-                result.add((PlayDataItem) comp);
+            if (comp instanceof PlayDataItemMy) {
+                result.add((PlayDataItemMy) comp);
             }
         }
 
@@ -488,12 +519,13 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
 
     public static void updatePlayedLabelText() {
         new Thread(() -> {
-            try {Thread.sleep(250);
+            try {
+                Thread.sleep(250);
             } catch (InterruptedException e) {/* IGNORE */}
 
-            List<PlayDataItem> played = getSoundedItems();
+            List<PlayDataItemMy> played = getSoundedItems();
             String mes = "<html>Playing: ";
-            for (PlayDataItem playItem : played) {
+            for (PlayDataItemMy playItem : played) {
                 mes += "<b color='YELLOW'>" + playItem.getName() + ":</b> '" + playItem.getActiveTrackName() + "' ";
             }
 
@@ -505,7 +537,8 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
 
     public static void setPlayedLabelText(String mes) {
         new Thread(() -> {
-            try {Thread.sleep(250);
+            try {
+                Thread.sleep(250);
             } catch (InterruptedException e) {/* IGNORE */}
 
             nowPlayedLabel.setText(mes);
@@ -513,10 +546,12 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
         }).start();
     }
 
-    public static JFrame getFrame() {return frame;}
+    public static JFrame getFrame() {
+        return frame;
+    }
 
-    public static PlayDataItem getSelectedItem() {
-        for (PlayDataItem comp : getWeekdayItems()) {
+    public static PlayDataItemMy getSelectedItem() {
+        for (PlayDataItemMy comp : getWeekdayItems()) {
             if (comp.isSelected()) {
                 return comp;
             }
@@ -524,10 +559,10 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
         return null;
     }
 
-    private static List<PlayDataItem> getSoundedItems() {
-        List<PlayDataItem> result = new ArrayList<>();
+    private static List<PlayDataItemMy> getSoundedItems() {
+        List<PlayDataItemMy> result = new ArrayList<>();
 
-        for (PlayDataItem comp : getWeekdayItems()) {
+        for (PlayDataItemMy comp : getWeekdayItems()) {
             if (comp.isPlayed()) {
                 result.add(comp);
             }
@@ -552,8 +587,11 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
         selTrackName.setToolTipText("" + row.getPath().toFile().getName().substring(0, row.getPath().toFile().getName().length() - 4));
         selTrackPath.setText("<html> <b color='#00FFFF'>Path:</b> " + row.getPath());
         selTrackPath.setToolTipText("" + row.getPath());
-        try {selTrackDuration.setText("<html> <b color='#00FFFF'>Duration:</b> " + row.getDuration());
-        } catch (IOException e) {e.printStackTrace();}
+        try {
+            selTrackDuration.setText("<html> <b color='#00FFFF'>Duration:</b> " + row.getDuration());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         selTrackSize.setText("<html> <b color='#00FFFF'>Size:</b> " + String.format("%.2f", row.getPath().toFile().length() / 1000f / 1000f) + " mb.");
     }
 
@@ -579,7 +617,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                 String meta = Files.readString(Paths.get("./resources/scheduler/" + day + ".meta"), StandardCharsets.UTF_8);
                 String[] data = meta.split("NN_");
 
-                dayItems[daysCounter] = new PlayDataItem(
+                dayItems[daysCounter] = new PlayDataItemMy(
                         day,
                         data[1].split("_EE")[1],
                         data[2].split("_EE")[1],
@@ -635,7 +673,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
             } catch (NoSuchFileException fnf) {
                 Out.Print("PlayList for " + day + " is not exist.", Out.LEVEL.WARN);
                 dayItems[daysCounter] =
-                        new PlayDataItem(
+                        new PlayDataItemMy(
                                 day,
                                 "12:00:00", "12:00:00",
                                 true);
@@ -644,7 +682,8 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                 e.printStackTrace();
             }
 
-            try {playDatePane.add(dayItems[daysCounter]);
+            try {
+                playDatePane.add(dayItems[daysCounter]);
             } catch (Exception e) {
                 Out.Print("Is playDatePane`s add err: " + e.getMessage(), Out.LEVEL.ERROR, e.getStackTrace());
                 e.printStackTrace();
@@ -666,7 +705,11 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
 
 
     private static void setProgress(int prog) {
-        if (prog < 0) {prog = 0;} else if (prog > 100) {prog = 100;}
+        if (prog < 0) {
+            prog = 0;
+        } else if (prog > 100) {
+            prog = 100;
+        }
         playProgress.setValue(prog);
     }
 
@@ -689,19 +732,19 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
         executor.shutdownNow();
 
         // saving days:
-        for (PlayDataItem wdItem : getWeekdayItems()) {
+        for (PlayDataItemMy wdItem : getWeekdayItems()) {
             wdItem.saveToFile();
         }
 
         BackVocalFrame.this.dispose();
-        MainClass.exit(Codes.OLL_OK);
+        MainClassMy.exit(CodesMy.OLL_OK);
     }
 
 
     // Listeners:
     @Override
     public void windowOpened(WindowEvent e) {
-    	Out.Print(BackVocalFrame.class, Out.LEVEL.INFO, "The frame is open now.");
+        Out.Print(BackVocalFrame.class, Out.LEVEL.INFO, "The frame is open now.");
     }
 
     @Override
@@ -737,15 +780,13 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                 }
             };
 
-
-
-
             trayIcon = new TrayIcon(Toolkit.getDefaultToolkit().getImage("./resources/icons/0.png"), "BVF", popup);
             trayIcon.addActionListener(e1 -> detray());
             trayIcon.setImageAutoSize(true);
             trayIcon.setToolTip("BackVocalStudio");
 
-            try {tray();
+            try {
+                tray();
             } catch (AWTException awtException) {
                 awtException.printStackTrace();
                 Out.Print(BackVocalFrame.class, Out.LEVEL.ERROR, Arrays.stream(awtException.getStackTrace()).toArray());
@@ -754,19 +795,31 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
     }
 
     @Override
-    public void windowDeiconified(WindowEvent e) {detray();}
+    public void windowDeiconified(WindowEvent e) {
+        detray();
+    }
 
-    public void windowActivated(WindowEvent e) {}
-    public void windowDeactivated(WindowEvent e) {}
+    public void windowActivated(WindowEvent e) {
+    }
+
+    public void windowDeactivated(WindowEvent e) {
+    }
 
     @Override
     public void componentResized(ComponentEvent e) {
         SwingUtilities.invokeLater(() -> {
+            downShedulePane.setPreferredSize(new Dimension(0, dayItems[0].getHeight() + 64));
+            playProgress.setPreferredSize(new Dimension(frame.getWidth() / 3, 27));
             rightInfoPane.setPreferredSize(new Dimension(frame.getWidth() / 4, 0));
         });
     }
 
-    public void componentMoved(ComponentEvent e) {}
-    public void componentShown(ComponentEvent e) {}
-    public void componentHidden(ComponentEvent e) {}
+    public void componentMoved(ComponentEvent e) {
+    }
+
+    public void componentShown(ComponentEvent e) {
+    }
+
+    public void componentHidden(ComponentEvent e) {
+    }
 }

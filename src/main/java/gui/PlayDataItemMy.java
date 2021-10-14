@@ -28,7 +28,7 @@ import java.util.Date;
 import java.util.Locale;
 
 
-public class PlayDataItem extends JPanel implements MouseListener, ActionListener {
+public class PlayDataItemMy extends JPanel implements MouseListener, ActionListener {
 //    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
     private SimpleDateFormat weakday = new SimpleDateFormat("EEEE", Locale.US);
 
@@ -127,7 +127,7 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
     }
 
 
-    public PlayDataItem(String name, String _timerIn, String _timerOut, Boolean _repeat) {
+    public PlayDataItemMy(String name, String _timerIn, String _timerOut, Boolean _repeat) {
         alarmList = new JList(arm);
 
         setName(name);
@@ -141,20 +141,20 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
         playpane = new PlayPane(this);
 
         setOpaque(false);
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(0,0));
 
         dayNameLabel = new JLabel(getName()) {{setFont(titleFont); setBorder(new EmptyBorder(3,6,0,0));}};
 
         dayControlPane = new JPanel(new BorderLayout()) {
             {
                 setOpaque(false);
-                setBorder(new EmptyBorder(0,6,1,6));
+                setBorder(new EmptyBorder(0,3,1,3));
 
-                JPanel upSchedulePane = new JPanel(new BorderLayout(3,0)) {
+                JPanel upSchedulePane = new JPanel(new BorderLayout(0,0)) {
                     {
                         setOpaque(false);
 
-                        JPanel inTimePane = new JPanel(new GridLayout(2,3, 3,0)) {
+                        JPanel inTimePane = new JPanel(new GridLayout(2,3, 1,0)) {
                             {
                                 setOpaque(false);
 
@@ -215,7 +215,7 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
                             }
                         };
 
-                        JPanel outTimePane = new JPanel(new GridLayout(2,3, 3, 0)) {
+                        JPanel outTimePane = new JPanel(new GridLayout(2,3, 1, 0)) {
                             {
                                 setOpaque(false);
 
@@ -284,10 +284,10 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
                     }
                 };
 
-                JPanel downOptionsPane = new JPanel(new BorderLayout(3,3)) {
+                JPanel downOptionsPane = new JPanel(new BorderLayout(1,0)) {
                     {
                         setOpaque(false);
-                        setBorder(new EmptyBorder(6,0,0,0));
+                        setBorder(new EmptyBorder(6,0,0,3));
 
                         int btnsDim = 28;
 
@@ -319,7 +319,7 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
                                 }
                                 setPreferredSize(new Dimension(32, 32));
                                 setActionCommand("alarmBtn");
-                                addActionListener(PlayDataItem.this);
+                                addActionListener(PlayDataItemMy.this);
                             }
                         };
 
@@ -355,7 +355,7 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
                                         setFocusPainted(false);
                                         setPreferredSize(new Dimension(32, 32));
                                         setActionCommand("play");
-                                        addActionListener(PlayDataItem.this);
+                                        addActionListener(PlayDataItemMy.this);
                                     }
                                 };
 
@@ -382,7 +382,7 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
                                         setFocusPainted(false);
                                         setPreferredSize(new Dimension(32, 32));
                                         setActionCommand("next");
-                                        addActionListener(PlayDataItem.this);
+                                        addActionListener(PlayDataItemMy.this);
                                     }
                                 };
 
@@ -409,7 +409,7 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
                                         setFocusPainted(false);
                                         setPreferredSize(new Dimension(32, 32));
                                         setActionCommand("stop");
-                                        addActionListener(PlayDataItem.this);
+                                        addActionListener(PlayDataItemMy.this);
                                     }
                                 };
 
@@ -419,7 +419,7 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
                             }
                         };
 
-                        JPanel repeatPane = new JPanel(new BorderLayout(3,3)) {
+                        JPanel repeatPane = new JPanel(new BorderLayout(0,0)) {
                             {
                                 setOpaque(false);
 
@@ -460,6 +460,7 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
 
     public synchronized void saveToFile() {
         try {
+            Out.Print(PlayDataItemMy.class, Out.LEVEL.INFO, "Try to save PlayDataItem data...");
 
             try (OutputStreamWriter osw = new OutputStreamWriter(
                     new FileOutputStream("./resources/scheduler/" + getName() + ".meta"), StandardCharsets.UTF_8)) {
@@ -469,6 +470,7 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
                             "NN_REP_EE" + repeat
                 );
             } catch (Exception e) {
+                Out.Print(PlayDataItemMy.class, Out.LEVEL.WARN, "PlayDataItem cant reached save to .meta: " + e.getMessage());
                 e.printStackTrace();
             }
 
@@ -478,6 +480,7 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
                     osw.write(arm.get(i).getTime() + ">" + arm.get(i).getTrack() + "\r\n");
                 }
             } catch (Exception e) {
+                Out.Print(PlayDataItemMy.class, Out.LEVEL.WARN, "PlayDataItem cant reached save to .alarms: " + e.getMessage());
                 e.printStackTrace();
             }
 
@@ -489,12 +492,13 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
                 }
 
             } catch (Exception e) {
+                Out.Print(PlayDataItemMy.class, Out.LEVEL.WARN, "PlayDataItem cant reached save to .list: " + e.getMessage());
                 e.printStackTrace();
             }
 
         } catch (Exception e) {
             e.printStackTrace();
-            Out.Print("Error with saving PlayDataItem: " + e.getMessage());
+            Out.Print(PlayDataItemMy.class, Out.LEVEL.WARN, "Error with saving PlayDataItemMy: " + e.getMessage());
         }
     }
 
@@ -543,23 +547,6 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
         return accept;
     }
 
-//    public void checkScheduleLaunch() {
-//        // если сегодня день и время активности - нужно сразу запуститься.
-//        Date todayIs = new Date();
-//
-//        boolean todayIsCurrentItemList = false;
-//        System.out.println("WD: '" + weakday.format(todayIs) + "', '" + getName() + "'.");
-//        if (weakday.format(todayIs).equalsIgnoreCase(getName())) {
-//            todayIsCurrentItemList = true;
-//        }
-//
-//        boolean currentDaysPlaylistIsNotEmpty = !playpane.isEmpty();
-//        if (todayIsCurrentItemList && currentDaysPlaylistIsNotEmpty) {
-//            BackVocalFrame.resetDownPaneSelect();
-//            setSelected(true);
-//            play(0);
-//        }
-//    }
 
     // Audio control:
     public synchronized void play() {
@@ -798,7 +785,7 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
                     setSelected(true);
                     playpane.repaint();
                 } else {
-                    JOptionPane.showConfirmDialog(PlayDataItem.this, "Its not a schedule time!", "Not yet:", JOptionPane.DEFAULT_OPTION);
+                    JOptionPane.showConfirmDialog(PlayDataItemMy.this, "Its not a schedule time!", "Not yet:", JOptionPane.DEFAULT_OPTION);
                 }
                 break;
 

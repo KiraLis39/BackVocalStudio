@@ -1,12 +1,12 @@
 package registry;
 
-public enum Codes {
+public enum CodesMy {
     BAD_DB_SAVING(114),
     OLL_OK(0);
 
     private int code;
 
-    Codes(int code) {
+    CodesMy(int code) {
         this.code = code;
     }
 
