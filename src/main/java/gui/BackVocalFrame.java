@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 
 public class BackVocalFrame extends JFrame implements WindowListener, ComponentListener {
     private static TrayIcon trayIcon;
@@ -648,19 +650,8 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
 
 
                 // LIST loading:
-                List<String> tracks = Files.lines(Paths.get("./resources/scheduler/" + day + ".list"), StandardCharsets.UTF_8).collect(Collectors.toList());
-                for (String track : tracks) {
-                    try {
-                        dayItems[daysCounter].addTrack(Paths.get(track));
-                    } catch (Exception e) {
-                        if (Files.notExists(Paths.get(track))) {
-                            Out.Print("Track not exist:", Out.LEVEL.WARN, e.getStackTrace());
-                        } else {
-                            Out.Print("Unknown err:", Out.LEVEL.ERROR, e.getStackTrace());
-                        }
-                    }
-                }
-
+                List<Path> tracks = Files.list(Paths.get("./resources/scheduler/" + day + ".list")).collect(Collectors.toList());
+                dayItems[daysCounter].addTracks(tracks);
             } catch (IllegalArgumentException iae) {
                 Out.Print("Err:", Out.LEVEL.WARN, iae.getStackTrace());
                 iae.printStackTrace();

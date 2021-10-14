@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 
@@ -660,7 +661,13 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
         return isHandStopped;
     }
 
-    public void addTrack(Path path) {playpane.add(path);}
+    public void addTracks(List<Path> path) {
+        try {
+            playpane.add(path);
+        } catch (Exception e) {
+            Out.Print(PlayDataItemMy.class, Out.LEVEL.WARN, "Exception by adding track: " + e.getMessage());
+        }
+    }
 
     public void setSelected(boolean selected) {
         this.isSelected = selected;

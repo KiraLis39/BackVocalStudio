@@ -90,9 +90,11 @@ public class PlayPane extends JPanel implements iPlayList {
     }
 
     @Override
-    public void add(Path trackPath) {
-        if (Files.exists(trackPath)) {
-            tracks.add(trackPath);
+    public void add(List<Path> trackPaths) {
+        for (Path path : trackPaths) {
+            if (Files.exists(path)) {
+                tracks.add(path);
+            }
             reload();
         }
     }
@@ -184,32 +186,40 @@ public class PlayPane extends JPanel implements iPlayList {
         return result;
     }
 
-    public void setTracks(File[] tracks) {
+    public void setTracks(List<Path> tracks) {
         try {
-            for (File file : tracks) {
-                if (Files.isRegularFile(file.toPath())) {
-                    if (file.getName().endsWith(".mp3")) {
-                        System.out.println("Find the track: '" + file + "'...");
-                        add(file.toPath());
+            List<Path> result = new ArrayList<>();
+
+            for (Path file : tracks) {
+                if (Files.isRegularFile(file)) {
+                    if (file.toFile().getName().endsWith(".mp3")) {
+                        result.add(file);
                     }
                 }
             }
+
+            add(result);
         } catch (Exception e) {
+            Out.Print(PlayPane.class, Out.LEVEL.WARN, "Exception: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    public void setTracks(File tracksDirectory) {
+    public void setTracks(File dir) {
         try {
-            for (File file : tracksDirectory.listFiles()) {
+            List<Path> result = new ArrayList<>();
+
+            for (File file : dir.listFiles()) {
                 if (Files.isRegularFile(file.toPath())) {
                     if (file.getName().endsWith(".mp3")) {
-                        System.out.println("Find the track: '" + file + "'...");
-                        add(file.toPath());
+                        result.add(file.toPath());
                     }
                 }
             }
+
+            add(result);
         } catch (Exception e) {
+            Out.Print(PlayPane.class, Out.LEVEL.WARN, "Exception: " + e.getMessage());
             e.printStackTrace();
         }
     }

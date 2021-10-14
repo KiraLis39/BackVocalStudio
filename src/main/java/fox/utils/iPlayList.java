@@ -1,6 +1,8 @@
 package fox.utils;
 
 import java.nio.file.Path;
+import java.util.List;
+
 
 public interface iPlayList {
     int getRowsCount();
@@ -8,7 +10,7 @@ public interface iPlayList {
     boolean moveSelectedUp();
     boolean moveSelectedDown();
     void removeSelected();
-    void add(Path fileName);
+    void add(List<Path> files);
     Path getTrack(int index);
     boolean isEmpty();
 }
