@@ -461,7 +461,7 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
 
     public synchronized void saveToFile() {
         try {
-            Out.Print(PlayDataItemMy.class, Out.LEVEL.INFO, "Try to save PlayDataItem data...");
+            Out.Print(PlayDataItemMy.class, Out.LEVEL.INFO, "Try to save " + getName() + " data...");
 
             try (OutputStreamWriter osw = new OutputStreamWriter(
                     new FileOutputStream("./resources/scheduler/" + getName() + ".meta"), StandardCharsets.UTF_8)) {
@@ -497,6 +497,7 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
                 e.printStackTrace();
             }
 
+            Out.Print(PlayDataItemMy.class, Out.LEVEL.INFO, "Saving day " + getName() + " successfully accomplished!");
         } catch (Exception e) {
             e.printStackTrace();
             Out.Print(PlayDataItemMy.class, Out.LEVEL.WARN, "Error with saving PlayDataItemMy: " + e.getMessage());

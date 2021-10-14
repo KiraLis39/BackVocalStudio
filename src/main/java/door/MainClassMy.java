@@ -34,7 +34,7 @@ public class MainClassMy {
             Out.setLogsCoutAllow(5);
 
             Out.Print("Start!");
-            Out.setErrorLevel(Out.LEVEL.ACCENT);
+            Out.setErrorLevel(Out.LEVEL.DEBUG);
 
             loadUIM();
 

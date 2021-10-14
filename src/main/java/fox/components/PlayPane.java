@@ -38,7 +38,7 @@ public class PlayPane extends JPanel implements iPlayList {
 
     private void reload() {
         if (tracks == null || tracks.size() == 0) {
-            Out.Print("tracks is empty so return...");
+            Out.Print(PlayPane.class, Out.LEVEL.ACCENT, "Tracks array is empty, so return.");
             return;
         }
 
@@ -95,13 +95,24 @@ public class PlayPane extends JPanel implements iPlayList {
             if (Files.exists(path)) {
                 tracks.add(path);
             }
-            reload();
         }
+        reload();
     }
 
     @Override
     public Path getTrack(int index) {
-        return dlm.getElementAt(index).getPath();
+        if (index >= dlm.getSize()) {
+            return null;
+        } else {
+            try {
+                ListRow el = dlm.getElementAt(index);
+                return el.getPath();
+            } catch (Exception e) {
+                Out.Print(PlayPane.class, Out.LEVEL.WARN, "Exception: " + e.getMessage());
+                e.printStackTrace();
+                return null;
+            }
+        }
     }
 
     public int getPlayedIndex() {return owner.getIndexOfPlayed();}

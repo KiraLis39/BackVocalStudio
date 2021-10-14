@@ -430,7 +430,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
-                        Out.Print("Play executor was interrupted.");
+//                        Out.Print("Play executor was interrupted.");
                         Thread.currentThread().interrupt();
                     }
                 }
@@ -475,7 +475,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
-                        Out.Print("Alarms executor was interrupted.");
+//                        Out.Print("Alarms executor was interrupted.");
                         Thread.currentThread().interrupt();
                     }
                 }
@@ -657,7 +657,11 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
 
 
                 // LIST loading:
-                List<Path> tracks = Files.list(Paths.get("./resources/scheduler/" + day + ".list")).collect(Collectors.toList());
+                List<String> trackss = Files.lines(Paths.get("./resources/scheduler/" + day + ".list"), StandardCharsets.UTF_8).collect(Collectors.toList());
+                List<Path> tracks = new ArrayList<>();
+                for (String s : trackss) {
+                    tracks.add(Paths.get(s));
+                }
                 dayItems[daysCounter].addTracks(tracks);
             } catch (IllegalArgumentException iae) {
                 Out.Print("Err:", Out.LEVEL.WARN, iae.getStackTrace());
@@ -734,6 +738,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
             wdItem.saveToFile();
         }
 
+        Out.Print(PlayDataItemMy.class, Out.LEVEL.INFO, "Finishing at " + sdf.format(System.currentTimeMillis()));
         BackVocalFrame.this.dispose();
         MainClassMy.exit(CodesMy.OLL_OK);
     }
@@ -806,7 +811,9 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
     @Override
     public void componentResized(ComponentEvent e) {
         SwingUtilities.invokeLater(() -> {
-            downShedulePane.setPreferredSize(new Dimension(0, dayItems[0].getHeight() + 64));
+            if (downShedulePane != null && dayItems[0] != null) {
+                downShedulePane.setPreferredSize(new Dimension(0, dayItems[0].getHeight() + 64));
+            }
             playProgress.setPreferredSize(new Dimension(frame.getWidth() / 3, 27));
             rightInfoPane.setPreferredSize(new Dimension(frame.getWidth() / 4, 0));
         });
