@@ -488,8 +488,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                 setForeground(Color.WHITE);
             }}, BorderLayout.NORTH);
             centerPlaylistsPane.add(playpane, BorderLayout.CENTER);
-
-            Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "The playlist named '" + playpane.getName() + "' was added to CENTER.");
+//            Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "The playlist named '" + playpane.getName() + "' was added to CENTER.");
         }
 
         playListsScroll.repaint();
@@ -715,24 +714,32 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
     }
 
     private void exit() {
+        Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "Try to stop the executors...");
         executor.shutdown(); //shutdown executor
 
         try {
-            while (!executor.awaitTermination(3, TimeUnit.SECONDS)) {
-                System.out.println("Awaiting stop...");
+            int maxCycleStopAwait = 3;
+            while (!executor.awaitTermination(3, TimeUnit.SECONDS) && maxCycleStopAwait > 0) {
+                maxCycleStopAwait--;
+                Out.Print(PlayDataItemMy.class, Out.LEVEL.WARN, "Waiting for a stop takes more time than seems...");
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        if (!executor.isTerminated()) {executor.shutdownNow();}
+        if (!executor.isTerminated()) {
+            Out.Print(PlayDataItemMy.class, Out.LEVEL.ERROR, "Executors can`t stopped, than was killed! It`s bad.");
+            executor.shutdownNow();
+        }
 
         // saving days:
         for (PlayDataItemMy wdItem : getWeekdayItems()) {
             wdItem.saveToFile();
         }
 
-        Out.Print(PlayDataItemMy.class, Out.LEVEL.INFO, "Finishing at " + sdf.format(System.currentTimeMillis() - MainClassMy.getStartTime()));
+        Out.Print(PlayDataItemMy.class, Out.LEVEL.INFO, "Finish at " + sdf.format(System.currentTimeMillis() - MainClassMy.getStartTime()));
         BackVocalFrame.this.dispose();
+
+        Out.close();
         MainClassMy.exit(CodesMy.OLL_OK);
     }
 
@@ -740,7 +747,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
     // Listeners:
     @Override
     public void windowOpened(WindowEvent e) {
-        Out.Print(BackVocalFrame.class, Out.LEVEL.INFO, "The frame is open now.");
+        Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "The frame is open now.");
     }
 
     @Override

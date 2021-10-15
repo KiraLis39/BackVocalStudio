@@ -12,7 +12,7 @@ import java.util.Deque;
 import java.util.Stack;
 
 public class Out {
-	public static enum LEVEL {DEBUG, INFO, ACCENT, WARN, ERROR, CRITICAL}
+    public static enum LEVEL {DEBUG, INFO, ACCENT, WARN, ERROR, CRITICAL}
 	private static LEVEL errLevel = LEVEL.DEBUG; // уровень, от которого сообщения будут обрабатываться
 	
 	private final static Charset charset = StandardCharsets.UTF_8;
@@ -31,7 +31,7 @@ public class Out {
 	private static String currentDate, currentTime, address;
 	
 	private static int logCount = 0; // счетчик сообщений в логе
-	private static int sleepTime = 100;
+	private static int sleepTime = 150;
 	private static int logsCountAllow = 10;	// сколько логов хранить по-умолчанию
 
 	
@@ -43,20 +43,17 @@ public class Out {
 				Print(Out.class, LEVEL.INFO, Thread.currentThread().getName() + " is started with write-level " + errLevel.name() + " (#" + errLevel.ordinal() + ")");
 				if (!checkFiles()) {throw new RuntimeException("ERR: Out: Files creating is fail!");}
 
-				while (enabled && !Thread.currentThread().isInterrupted()) {
+				while (enabled && !Thread.currentThread().isInterrupted() || !messageStack.isEmpty()) {
 					if (!messageStack.isEmpty()) {
+
+						if (messageStack.size() > 25) {LogThread.setPriority(Thread.MAX_PRIORITY);
+						} else if (messageStack.size() > 10) {LogThread.setPriority(Thread.NORM_PRIORITY);
+						} else {LogThread.setPriority(Thread.MIN_PRIORITY);}
+
 						if (free) {
 							free = false;
-
-							if (messageStack.size() > 25) {LogThread.setPriority(Thread.MAX_PRIORITY);
-							} else if (messageStack.size() > 10) {LogThread.setPriority(Thread.NORM_PRIORITY);
-							} else {LogThread.setPriority(Thread.MIN_PRIORITY);}
-
-							if (typeDeque.size() != messageStack.size()) {
-								System.err.println("WARN: Out messageArray has size: " + messageStack.size() + ", but typeDeque`s size: " + typeDeque.size());
-							}
-
 							logHTML();
+							free = true;
 						}
 					}
 
@@ -130,12 +127,11 @@ public class Out {
 			currentTime = fnc.format(System.currentTimeMillis());
 			address = messageStack.pop();
 
-			osw.write(
-					"<p style='font-family:arial,fixedsys,consolas;font-size:10px;font color=#000'>" + currentTime + "<br>" + 
-					"<font style='font-family:consolas,arial,garamond;font-size:12px;'>");
+			osw.write("<p style='font-family:arial,fixedsys,consolas;size:10px;color:#000'>" + currentTime +
+					"<br><size:12px;'>");
 			
 			switch (typeDeque.pollLast()) {
-				case DEBUG: osw.write("<font color='#666'>" + logCount + ") " + address);
+				case DEBUG: osw.write("<font color='#888'>" + logCount + ") " + address);
 					break;	
 				case INFO: osw.write("<font color='#000'>" + logCount + ") " + address);
 					break;	
@@ -158,7 +154,6 @@ public class Out {
 			}
 		} finally {
 			logCount++;
-			free = true;
 		}
 	}
 	
@@ -192,15 +187,17 @@ public class Out {
 				default:		resultString = "[DEBUG]\t" + address + ": " + message;
 			}
 
+			if (enabled) {
+				if (LogThread == null) {start();}
+
+				typeDeque.addFirst(level);
+				messageStack.insertElementAt(address + ": " + message, 0);
+			}
+
 			if (thanNextLine) {
 				System.out.println(); 
 				thanNextLine = false;
 			}
-			
-			if (LogThread == null) {start();}
-
-			typeDeque.addFirst(level);
-			messageStack.insertElementAt(address + ": " + message, 0);
 
 			if (level.ordinal() >= errLevel.ordinal()) {
 				if (level == LEVEL.ERROR || level == LEVEL.WARN) {System.err.println(resultString);				
@@ -209,6 +206,15 @@ public class Out {
 		}
 	}
 
+	public static void close() {
+		try {
+			enabled = false;
+			LogThread.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			if (LogThread != null && !LogThread.isInterrupted()) {LogThread.interrupt();}
+		}
+	}
 
 	// сколько максимально файлов лога хранить:
 	public static void setLogsCountAllow(int _logsCountAllow) {logsCountAllow = _logsCountAllow;}
