@@ -3,8 +3,6 @@ package fox.utils;
 import java.awt.*;
 import java.io.Serializable;
 
-
-@SuppressWarnings("serial")
 public class VerticalFlowLayout implements LayoutManager, Serializable {
 	/**
 	 * This value indicates that each row of components should be left-justified.

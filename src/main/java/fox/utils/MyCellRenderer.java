@@ -2,18 +2,15 @@ package fox.utils;
 
 import fox.components.ListRow;
 import fox.fb.FoxFontBuilder;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-
 
 public class MyCellRenderer extends JPanel implements ListCellRenderer {
     private static int cellHeight;
 
     private JButton label;
     private Font trackSelectedFont = FoxFontBuilder.setFoxFont(FoxFontBuilder.FONT.CONSOLAS, 12, true);
-
 
     @Override
     public void paintComponent(Graphics g) {
@@ -52,8 +49,6 @@ public class MyCellRenderer extends JPanel implements ListCellRenderer {
 
         label.setIcon(new ImageIcon(ico));
         label.setText("<html><b>(" + ((ListRow) value).getCount() + ")</b> " + ((ListRow) value).getText());
-//        label.setBorder(new EmptyBorder(0,0,0,0));
-
         if (isSelected) {
             label.setBackground(Color.GRAY);
             label.setForeground(Color.WHITE);
@@ -70,7 +65,6 @@ public class MyCellRenderer extends JPanel implements ListCellRenderer {
 
             int ind = ((CustomList)list).getPlayedRowIndex();
             if (((ListRow) value).getCount() - 1 == ind) {
-//                setBackground(Color.GRAY);
                 label.setBackground(Color.BLACK);
                 label.setForeground(Color.CYAN);
             } else {

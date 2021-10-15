@@ -151,137 +151,143 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
                 setOpaque(false);
                 setBorder(new EmptyBorder(0,3,1,3));
 
-                JPanel upSchedulePane = new JPanel(new BorderLayout(0,0)) {
+                JPanel upSchedulePane = new JPanel(new GridLayout(2,1)) {
                     {
                         setOpaque(false);
 
-                        JPanel inTimePane = new JPanel(new GridLayout(2,3, 1,0)) {
+                        JPanel inTimePane = new JPanel(new GridLayout(1,3, 6,0)) {
                             {
                                 setOpaque(false);
 
-                                inLabelH = new JLabel("In-Hour:") {{setHorizontalAlignment(JLabel.CENTER);}};
-                                JSpinner hourSpinner = new JSpinner(new SpinnerNumberModel(8,0,23,1)) {
+                                JPanel pane01 = new JPanel(new BorderLayout(0,0)) {
                                     {
-                                        setEditor(new JSpinner.NumberEditor(this,"00"));
-                                        setValue(Integer.parseInt(timerIn.split(":")[0]));
-                                        getEditor().setBackground(Color.BLACK);
-//                                        getEditor().getComponent(0).setForeground(Color.GREEN);
-                                        addChangeListener(new ChangeListener() {
-                                            @Override
-                                            public void stateChanged(ChangeEvent e) {
-                                                timerIn = getValue() + ":" + timerIn.split(":")[1] + ":" + timerIn.split(":")[2];
+                                        setOpaque(false);
+
+                                        inLabelH = new JLabel("In-Hour:") {{setHorizontalAlignment(JLabel.LEFT);}};
+                                        JSpinner hourSpinner = new JSpinner(new SpinnerNumberModel(8,0,23,1)) {
+                                            {
+                                                setEditor(new JSpinner.NumberEditor(this,"00"));
+                                                setValue(Integer.parseInt(timerIn.split(":")[0]));
+                                                getEditor().setBackground(Color.BLACK);
+                                                addChangeListener(e -> timerIn = getValue() + ":" + timerIn.split(":")[1] + ":" + timerIn.split(":")[2]);
                                             }
-                                        });
+                                        };
+
+                                        add(inLabelH, BorderLayout.NORTH);
+                                        add(hourSpinner, BorderLayout.CENTER);
                                     }
                                 };
 
-                                inLabelM = new JLabel("In-Min.:") {{setHorizontalAlignment(JLabel.CENTER);}};
-                                JSpinner minuteSpinner = new JSpinner(new SpinnerNumberModel(0,0,59,1)) {
+                                JPanel pane02 = new JPanel(new BorderLayout(0,0)) {
                                     {
-                                        setEditor(new JSpinner.NumberEditor(this,"00"));
-                                        setValue(Integer.parseInt(timerIn.split(":")[1]));
-                                        getEditor().setBackground(Color.BLACK);
-//                                        getEditor().getComponent(0).setForeground(Color.GREEN);
-                                        addChangeListener(new ChangeListener() {
-                                            @Override
-                                            public void stateChanged(ChangeEvent e) {
-                                                timerIn = timerIn.split(":")[0] + ":" + getValue() + ":" + timerIn.split(":")[2];
+                                        setOpaque(false);
+
+                                        inLabelM = new JLabel("In-Min.:") {{setHorizontalAlignment(JLabel.LEFT);}};
+                                        JSpinner minuteSpinner = new JSpinner(new SpinnerNumberModel(0,0,59,1)) {
+                                            {
+                                                setEditor(new JSpinner.NumberEditor(this,"00"));
+                                                setValue(Integer.parseInt(timerIn.split(":")[1]));
+                                                getEditor().setBackground(Color.BLACK);
+                                                addChangeListener(e -> timerIn = timerIn.split(":")[0] + ":" + getValue() + ":" + timerIn.split(":")[2]);
                                             }
-                                        });
+                                        };
+
+                                        add(inLabelM, BorderLayout.NORTH);
+                                        add(minuteSpinner, BorderLayout.CENTER);
                                     }
                                 };
 
-                                inLabelS = new JLabel("In-Sec.:") {{setHorizontalAlignment(JLabel.CENTER);}};
-                                JSpinner secondSpinner = new JSpinner(new SpinnerNumberModel(0,0,59,5)) {
+                                JPanel pane03 = new JPanel(new BorderLayout(0,0)) {
                                     {
-                                        setEditor(new JSpinner.NumberEditor(this,"00"));
-                                        setValue(Integer.parseInt(timerIn.split(":")[2]));
-                                        getEditor().setBackground(Color.BLACK);
-//                                        getEditor().getComponent(0).setForeground(Color.GREEN);
-                                        addChangeListener(new ChangeListener() {
-                                            @Override
-                                            public void stateChanged(ChangeEvent e) {
-                                                timerIn = timerIn.split(":")[0] + ":" + timerIn.split(":")[1] + ":" + getValue();
+                                        setOpaque(false);
+
+                                        inLabelS = new JLabel("In-Sec.:") {{setHorizontalAlignment(JLabel.LEFT);}};
+                                        JSpinner secondSpinner = new JSpinner(new SpinnerNumberModel(0,0,59,5)) {
+                                            {
+                                                setEditor(new JSpinner.NumberEditor(this,"00"));
+                                                setValue(Integer.parseInt(timerIn.split(":")[2]));
+                                                getEditor().setBackground(Color.BLACK);
+                                                addChangeListener(e -> timerIn = timerIn.split(":")[0] + ":" + timerIn.split(":")[1] + ":" + getValue());
                                             }
-                                        });
+                                        };
+
+                                        add(inLabelS, BorderLayout.NORTH);
+                                        add(secondSpinner, BorderLayout.CENTER);
                                     }
                                 };
 
-                                add(inLabelH);
-                                add(inLabelM);
-                                add(inLabelS);
-                                add(hourSpinner);
-                                add(minuteSpinner);
-                                add(secondSpinner);
+                                add(pane01);
+                                add(pane02);
+                                add(pane03);
                             }
                         };
 
-                        JPanel outTimePane = new JPanel(new GridLayout(2,3, 1, 0)) {
+                        JPanel outTimePane = new JPanel(new GridLayout(1,3, 6, 0)) {
                             {
                                 setOpaque(false);
 
-                                outLabelH = new JLabel("Out-Hour:") {{setHorizontalAlignment(JLabel.RIGHT);}};
-                                JSpinner hourSpinner = new JSpinner(new SpinnerNumberModel(8,0,23,1)) {
+                                JPanel pane01 = new JPanel(new BorderLayout(0,0)) {
                                     {
-                                        setEditor(new JSpinner.NumberEditor(this,"00"));
-                                        setValue(Integer.parseInt(timerOut.split(":")[0]));
-                                        getEditor().setBackground(Color.BLACK);
-//                                        getEditor().getComponent(0).setForeground(Color.RED);
-                                        addChangeListener(new ChangeListener() {
-                                            @Override
-                                            public void stateChanged(ChangeEvent e) {
-                                                timerOut = getValue() + ":" + timerOut.split(":")[1] + ":" + timerOut.split(":")[2];
+                                        setOpaque(false);
+
+                                        outLabelH = new JLabel("Out-Hour:") {{setHorizontalAlignment(JLabel.RIGHT);}};
+                                        JSpinner hourSpinner = new JSpinner(new SpinnerNumberModel(8,0,23,1)) {
+                                            {
+                                                setEditor(new JSpinner.NumberEditor(this,"00"));
+                                                setValue(Integer.parseInt(timerOut.split(":")[0]));
+                                                getEditor().setBackground(Color.BLACK);
+                                                addChangeListener(e -> timerOut = getValue() + ":" + timerOut.split(":")[1] + ":" + timerOut.split(":")[2]);
                                             }
-                                        });
+                                        };
+                                        add(outLabelH, BorderLayout.NORTH);
+                                        add(hourSpinner, BorderLayout.CENTER);
                                     }
                                 };
 
-                                outLabelM = new JLabel("Out-Min.:") {{setHorizontalAlignment(JLabel.RIGHT);}};
-                                JSpinner minuteSpinner = new JSpinner(new SpinnerNumberModel(0,0,59,1)) {
+                                JPanel pane02 = new JPanel(new BorderLayout(0,0)) {
                                     {
-                                        setEditor(new JSpinner.NumberEditor(this,"00"));
-                                        setValue(Integer.parseInt(timerOut.split(":")[1]));
-                                        getEditor().setBackground(Color.BLACK);
-//                                        getEditor().getComponent(0).setForeground(Color.RED);
-                                        addChangeListener(new ChangeListener() {
-                                            @Override
-                                            public void stateChanged(ChangeEvent e) {
-                                                timerOut = timerOut.split(":")[0] + ":" + getValue() + ":" + timerOut.split(":")[2];
+                                        setOpaque(false);
+
+                                        outLabelM = new JLabel("Out-Min.:") {{setHorizontalAlignment(JLabel.RIGHT);}};
+                                        JSpinner minuteSpinner = new JSpinner(new SpinnerNumberModel(0,0,59,1)) {
+                                            {
+                                                setEditor(new JSpinner.NumberEditor(this,"00"));
+                                                setValue(Integer.parseInt(timerOut.split(":")[1]));
+                                                getEditor().setBackground(Color.BLACK);
+                                                addChangeListener(e -> timerOut = timerOut.split(":")[0] + ":" + getValue() + ":" + timerOut.split(":")[2]);
                                             }
-                                        });
+                                        };
+                                        add(outLabelM, BorderLayout.NORTH);
+                                        add(minuteSpinner, BorderLayout.CENTER);
                                     }
                                 };
 
-                                outLabelS = new JLabel("Out-Sec.:") {{setHorizontalAlignment(JLabel.RIGHT);}};
-                                JSpinner secondSpinner = new JSpinner(new SpinnerNumberModel(0,0,59,5)) {
+                                JPanel pane03 = new JPanel(new BorderLayout(0,0)) {
                                     {
-                                        setEditor(new JSpinner.NumberEditor(this,"00"));
-                                        setValue(Integer.parseInt(timerOut.split(":")[2]));
+                                        setOpaque(false);
 
-                                        getEditor().setBackground(Color.BLACK);
-//                                        getEditor().getComponent(0).setForeground(Color.RED);
-//                                        ((JSpinner.NumberEditor) getEditor()).getTextField().setSelectedTextColor(Color.WHITE);
-
-                                        addChangeListener(new ChangeListener() {
-                                            @Override
-                                            public void stateChanged(ChangeEvent e) {
-                                                timerOut = timerOut.split(":")[0] + ":" + timerOut.split(":")[1] + ":" + getValue();
+                                        outLabelS = new JLabel("Out-Sec.:") {{setHorizontalAlignment(JLabel.RIGHT);}};
+                                        JSpinner secondSpinner = new JSpinner(new SpinnerNumberModel(0,0,59,5)) {
+                                            {
+                                                setEditor(new JSpinner.NumberEditor(this,"00"));
+                                                setValue(Integer.parseInt(timerOut.split(":")[2]));
+                                                getEditor().setBackground(Color.BLACK);
+                                                addChangeListener(e -> timerOut = timerOut.split(":")[0] + ":" + timerOut.split(":")[1] + ":" + getValue());
                                             }
-                                        });
+                                        };
+                                        add(outLabelS, BorderLayout.NORTH);
+                                        add(secondSpinner, BorderLayout.CENTER);
                                     }
                                 };
 
-                                add(outLabelH);
-                                add(outLabelM);
-                                add(outLabelS);
-                                add(hourSpinner);
-                                add(minuteSpinner);
-                                add(secondSpinner);
+                                add(pane01);
+                                add(pane02);
+                                add(pane03);
                             }
                         };
 
-                        add(inTimePane, BorderLayout.NORTH);
-                        add(outTimePane, BorderLayout.SOUTH);
+                        add(inTimePane);
+                        add(outTimePane);
                     }
                 };
 
@@ -424,7 +430,7 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
                             {
                                 setOpaque(false);
 
-                                repeatCBox = new JCheckBox("Repeat") {
+                                repeatCBox = new JCheckBox("Повтор") {
                                     {
                                         setFont(btnFont);
                                         setForeground(defTextColor);
@@ -556,44 +562,51 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
             JOptionPane.showConfirmDialog(this, "Playlist is empty!", "Info:", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null);
             return;
         }
+        if (indexOfPlayed == -1) {return;}
         if (isPlaying) {stop();}
 
-        Out.Print("The track '" + playpane.getTrack(indexOfPlayed).toFile().getName() + "' is played now...");
-        musicThread = new Thread(() -> {
-            while (indexOfPlayed < playpane.getRowsCount()) {
-                BackVocalFrame.updatePlayedLabelText();
+        try {
+            Path tr = playpane.getTrack(indexOfPlayed);
+            Out.Print(PlayDataItemMy.class, Out.LEVEL.INFO, "The track '" + tr.toFile().getName() + "' is played now...");
+            musicThread = new Thread(() -> {
+                while (indexOfPlayed < playpane.getRowsCount()) {
+                    BackVocalFrame.updatePlayedLabelText();
 
-                try (BufferedInputStream mp3 = new BufferedInputStream(new FileInputStream(playpane.getTrack(indexOfPlayed).toFile()))) {
-                    isPlaying = true;
-                    player = new Player(mp3, FactoryRegistry.systemRegistry().createAudioDevice());
-                    player.play();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    try {player.close();
-                    } catch (Exception e) {/* IGNORE */}
-                }
+                    try (BufferedInputStream mp3 = new BufferedInputStream(new FileInputStream(playpane.getTrack(indexOfPlayed).toFile()))) {
+                        isPlaying = true;
+                        player = new Player(mp3, FactoryRegistry.systemRegistry().createAudioDevice());
+                        player.play();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    } finally {
+                        try {
+                            player.close();
+                        } catch (Exception e) {/* IGNORE */}
+                    }
 
-                indexOfPlayed++;
-                if (repeat && !isPaused && !isHandStopped) {
-                    if (indexOfPlayed >= playpane.getRowsCount()) {
-                        System.out.println("REPEAT INITIATED!");
-                        indexOfPlayed = 0;
+                    indexOfPlayed++;
+                    if (repeat && !isPaused && !isHandStopped) {
+                        if (indexOfPlayed >= playpane.getRowsCount()) {
+                            System.out.println("REPEAT INITIATED!");
+                            indexOfPlayed = 0;
+                        }
                     }
                 }
-            }
-        });
-        musicThread.start();
+            });
+            musicThread.start();
+        } catch (Exception e) {
+            Out.Print(PlayDataItemMy.class, Out.LEVEL.ACCENT, "Play-method exception: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     public synchronized void playNext() {
-        System.out.println("PLAY_NEXT!");
-
-//        indexOfPlayed++;
         if (indexOfPlayed >= playpane.getRowsCount()) {
             indexOfPlayed = 0;
         }
-        play();
+        if (playpane.getRowsCount() > 0) {
+            play();
+        }
     }
 
     public synchronized void pause() {
@@ -824,7 +837,7 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
     private class AlarmsDialog extends JDialog {
 
         public AlarmsDialog(JFrame parent) {
-            super(parent, "Alarms list:", true);
+            super(parent, "Лист оповещений:", true);
 
             setMinimumSize(new Dimension(400, 400));
             setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
@@ -843,63 +856,60 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
                         }
                     };
 
-                    JPanel downButtonsPane = new JPanel() {
+                    JPanel downButtonsPane = new JPanel(new BorderLayout(3, 0)) {
                         {
                             setBackground(Color.DARK_GRAY);
                             setBorder(new EmptyBorder(0,3,3,3));
-                            setLayout(new GridLayout(1, 2, 3, 3));
 
-                            JButton addAlarmBtn = new JButton("Add alarm") {
+                            JButton addAlarmBtn = new JButton("+ alarm") {
                                 {
                                     setBackground(new Color(0.75f,1.0f,0.75f,1.0f));
-                                    addActionListener(new ActionListener() {
-                                        @Override
-                                        public void actionPerformed(ActionEvent e) {
-                                            String alarmInitTime =
-                                                    JOptionPane.showInputDialog(
-                                                            AlarmsDialog.this,
-                                                            "Input init time:", "00:00:00");
-                                            Path alarmFilePath = null;
+                                    addActionListener(e -> {
+                                        String alarmInitTime = JOptionPane.showInputDialog(AlarmsDialog.this,
+                                                        "Старт в:", "00:00:00");
+                                        alarmInitTime = alarmInitTime.trim();
 
-                                            fch.setFileSelectionMode(JFileChooser.FILES_ONLY);
-                                            fch.setMultiSelectionEnabled(false);
-                                            fch.setDialogTitle("Choose alarm:");
+                                        fch.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                                        fch.setMultiSelectionEnabled(false);
+                                        fch.setDialogTitle("Выбери alarm:");
 
-                                            int result = fch.showOpenDialog(AlarmsDialog.this);
-                                            if (result == JFileChooser.APPROVE_OPTION ) {
-                                                try {
-                                                    alarmFilePath = fch.getSelectedFile().toPath();
+                                        Path alarmFilePath;
+                                        int result = fch.showOpenDialog(AlarmsDialog.this);
+                                        if (result == JFileChooser.APPROVE_OPTION ) {
+                                            try {
+                                                alarmFilePath = fch.getSelectedFile().toPath();
 
-                                                    if (!alarmInitTime.isBlank() &&
-                                                            alarmInitTime.length() == 8 &&
-                                                            alarmInitTime.contains(":") &&
-                                                            alarmInitTime.split(":").length == 3 &&
-                                                            Integer.parseInt(alarmInitTime.split(":")[0]) < 23 &&
-                                                            Integer.parseInt(alarmInitTime.split(":")[1]) < 59 &&
-                                                            Integer.parseInt(alarmInitTime.split(":")[2]) < 59
-                                                    ) {
-                                                        arm.addElement(new AlarmItem(alarmInitTime, alarmFilePath));
-                                                        alarmsBack = Color.GREEN;
-                                                    } else {
-                                                        JOptionPane.showConfirmDialog(AlarmsDialog.this, "Wrong data!", "Canceled.", JOptionPane.DEFAULT_OPTION);
-                                                    }
-                                                } catch (Exception e2) {
-                                                    e2.printStackTrace();
+                                                if (!alarmInitTime.isBlank() &&
+                                                        alarmInitTime.length() == 8 &&
+                                                        alarmInitTime.contains(":") && !alarmInitTime.contains(";") &&
+                                                        alarmInitTime.split(":").length == 3 &&
+                                                        Integer.parseInt(alarmInitTime.split(":")[0]) < 23 &&
+                                                        Integer.parseInt(alarmInitTime.split(":")[1]) < 59 &&
+                                                        Integer.parseInt(alarmInitTime.split(":")[2]) < 59
+                                                ) {
+                                                    arm.addElement(new AlarmItem(alarmInitTime, alarmFilePath));
+                                                    alarmsBack = Color.GREEN;
+                                                } else {
+                                                    JOptionPane.showConfirmDialog(AlarmsDialog.this, "Ошибка ввода!", "Отменено.", JOptionPane.DEFAULT_OPTION);
                                                 }
+                                            } catch (Exception e2) {
+                                                e2.printStackTrace();
                                             }
                                         }
                                     });
                                 }
                             };
 
-                            JButton remAlarmBtn = new JButton("Remove alarm") {
+                            JButton remAlarmBtn = new JButton("- alarm") {
                                 {
                                     setBackground(new Color(1.0f,0.75f,0.75f,1.0f));
                                     addActionListener(new ActionListener() {
                                         @Override
                                         public void actionPerformed(ActionEvent e) {
                                             AlarmItem toDelete = alarmList.getSelectedValue();
-                                            int req = JOptionPane.showConfirmDialog(AlarmsDialog.this, "Delete alarm on " + toDelete.getTime() + "?", "Confirm:", JOptionPane.OK_OPTION, JOptionPane.QUESTION_MESSAGE);
+                                            if (toDelete == null) {return;}
+                                            int req = JOptionPane.showConfirmDialog(AlarmsDialog.this,
+                                                    "Удалить alarm от " + toDelete.getTime() + "?", "Уверен:", JOptionPane.OK_OPTION, JOptionPane.QUESTION_MESSAGE);
                                             if (req == 0) {
                                                 arm.removeElement(toDelete);
                                                 if (arm.size() == 0) {
@@ -911,8 +921,8 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
                                 }
                             };
 
-                            add(addAlarmBtn);
-                            add(remAlarmBtn);
+                            add(addAlarmBtn, BorderLayout.CENTER);
+                            add(remAlarmBtn, BorderLayout.EAST);
                         }
                     };
 

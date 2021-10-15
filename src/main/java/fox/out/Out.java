@@ -39,46 +39,38 @@ public class Out {
  	
  	private static void start() {
  		if (LogThread == null) {
-			LogThread = new Thread(new Runnable() {
-				@Override
-				public void run() {
-					Print("Out:", LEVEL.INFO, Thread.currentThread().getName() + " is started with write-level " + errLevel.name() + " (#" + errLevel.ordinal() + ")");
-					if (!checkFiles()) {throw new RuntimeException("ERR: Out: Files creating is fail!");}
-					
-					while (enabled || !Thread.currentThread().isInterrupted()) {
-						if (messageStack.isEmpty()) {
-							try {Thread.sleep(sleepTime);
-							} catch (InterruptedException ie) {Thread.currentThread().interrupt();}
-						} else {
-							if (free) {
-								free = false;
-								
-								if (messageStack.size() > 30) {LogThread.setPriority(Thread.MAX_PRIORITY);
-								} else if (messageStack.size() > 15) {LogThread.setPriority(Thread.NORM_PRIORITY);
-								} else {LogThread.setPriority(Thread.MIN_PRIORITY);}
-								
-								if (typeDeque.size() != messageStack.size()) {
-									System.err.println("WARN: Out messageArray has size: " + messageStack.size() + ", but typeDeque`s size: " + typeDeque.size());
-								}
-								
-								logHTML();
+			LogThread = new Thread(() -> {
+				Print(Out.class, LEVEL.INFO, Thread.currentThread().getName() + " is started with write-level " + errLevel.name() + " (#" + errLevel.ordinal() + ")");
+				if (!checkFiles()) {throw new RuntimeException("ERR: Out: Files creating is fail!");}
+
+				while (enabled && !Thread.currentThread().isInterrupted()) {
+					if (!messageStack.isEmpty()) {
+						if (free) {
+							free = false;
+
+							if (messageStack.size() > 25) {LogThread.setPriority(Thread.MAX_PRIORITY);
+							} else if (messageStack.size() > 10) {LogThread.setPriority(Thread.NORM_PRIORITY);
+							} else {LogThread.setPriority(Thread.MIN_PRIORITY);}
+
+							if (typeDeque.size() != messageStack.size()) {
+								System.err.println("WARN: Out messageArray has size: " + messageStack.size() + ", but typeDeque`s size: " + typeDeque.size());
 							}
 
-							try {Thread.sleep(sleepTime);
-							} catch (InterruptedException ie) {Thread.currentThread().interrupt();
-							} catch (Exception e) {e.printStackTrace();}
+							logHTML();
 						}
 					}
-					
-					Print("INFO: Out", LEVEL.ACCENT, Thread.currentThread().getName() + " was stopped.");
+
+					try {Thread.sleep(sleepTime);
+					} catch (InterruptedException ie) {Thread.currentThread().interrupt();
+					} catch (Exception e) {e.printStackTrace();}
 				}
+
+				Print(Out.class, LEVEL.ACCENT, Thread.currentThread().getName() + " was stopped.");
 			})
 
 			{
 				{
 					setName("FoxLib39: OutLogThread");
-//					setPriority(Thread.MIN_PRIORITY);
-					setDaemon(true);
 					start();
 				}
 			};
@@ -124,7 +116,6 @@ public class Out {
 		if (logsCount.length >= logsCountAllow) {
 			for (int i = 0; i < logsCount.length - (logsCountAllow - 1); i++) {logsCount[i].delete();}
 		}
-		logsCount = null;
 	}
 
 	private static void openLogFile() {
@@ -134,7 +125,7 @@ public class Out {
 	}
 	
 	// вывод в файл лога:
-	private synchronized static void logHTML() {
+	private static void logHTML() {
 		try (OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(HTMLlog, true), charset)) {
 			currentTime = fnc.format(System.currentTimeMillis());
 			address = messageStack.pop();
@@ -172,26 +163,14 @@ public class Out {
 	}
 	
 	// базовая печать сообщений в консоль (до вывода в файл лога):
-	public synchronized static void Print(String message) {Print(Out.class, LEVEL.INFO, message, Thread.currentThread());}	
-	public synchronized static void Print(Class<?> clazz, Exception e) {Print(clazz, LEVEL.ERROR, e.getStackTrace());}
-	public static void Print(String message, LEVEL level) {
-		Print("", level, message);
-	}
-	public synchronized static void Print(Class<?> clazz, LEVEL level, Exception e) {Print(clazz, level, e.getStackTrace());}	
-	public synchronized static void Print(Class<?> clazz, LEVEL level, Object[] messages) {Print(clazz.getName(), level, messages);}	
-	public synchronized static void Print(Class<?> clazz, LEVEL level, String message) {Print(clazz, level, message, Thread.currentThread());}
-	public synchronized static void Print(Class<?> clazz, LEVEL level, String message, Thread srcThread) {Print(clazz.getName() + " -> " + srcThread.getStackTrace()[1].getMethodName(), level, message);}
-	public synchronized static void Print(String address, LEVEL level, Object[] messages) {
-		for (int i = 0; i < messages.length; i++) {Print(address, level, messages[i].toString());}
-	}
-	
-	private synchronized static void Print(String address, LEVEL level, String message) {
+	public synchronized static void Print(Class<?> clazz, LEVEL level, String message) {
+		address = clazz.getSimpleName();
 		if (level == LEVEL.CRITICAL) {throw new RuntimeException("!!! CRITICAL ERROR !!!\n" + address + ": " + message);}
 		
 		if (isEnabled()) {
 			if (message.startsWith("\n")) {
 				System.out.println();
-				message = message.substring(1, message.length());
+				message = message.substring(1);
 			}
 			if (message.endsWith("\n")) {thanNextLine = true;}
 			
@@ -230,23 +209,17 @@ public class Out {
 		}
 	}
 
-	// изменение папки логов по-умолчанию:
-	public static String getLogPath() {return HTMLdir.getPath();}
-	public static File getLogFile() {return HTMLlog;}
 
 	// сколько максимально файлов лога хранить:
-	public static int getLogsCoutAllow() {return logsCountAllow;}
-	public static void setLogsCoutAllow(int _logsCountAllow) {logsCountAllow = _logsCountAllow;}
+	public static void setLogsCountAllow(int _logsCountAllow) {logsCountAllow = _logsCountAllow;}
 	
 	// от какого и выше уровня обрабатывать сообщения:
 	public static void setErrorLevel(LEVEL lvl) {errLevel = lvl;}
-	public static LEVEL getErrorLevel() {return errLevel;}
 
 	public static boolean isEnabled() {return enabled;}
 	public static void setEnabled(boolean d) {
 		if (enabled == d) {return;}
 		enabled = d;
-		
 		if (LogThread == null || !LogThread.isAlive()) {start();}
 	}
 }

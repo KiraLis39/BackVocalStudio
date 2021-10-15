@@ -1,7 +1,5 @@
 package door;
 
-import fox.iom.IOM;
-import fox.iom.IOMs;
 import fox.out.Out;
 import javax.swing.*;
 import javax.swing.plaf.nimbus.NimbusLookAndFeel;
@@ -15,11 +13,6 @@ import registry.CodesMy;
 
 public class MainClassMy {
     private static Path[] importantDirs;
-
-    public static Long getStartTime() {
-        return startTime;
-    }
-
     private static Long startTime;
 
     public static void main(String[] args) {
@@ -28,12 +21,10 @@ public class MainClassMy {
         try {
             checkImportantDirectoriesExists();
 
-            buildIOM();
+            Out.setEnabled(true);
+            Out.setLogsCountAllow(5);
 
-            Out.setEnabled(IOM.getBoolean(IOM.HEADERS.CONFIG, IOMs.CONFIG.OUTLOG_ENABLED));
-            Out.setLogsCoutAllow(5);
-
-            Out.Print("Start!");
+            Out.Print(MainClassMy.class, Out.LEVEL.INFO, "Start!");
             Out.setErrorLevel(Out.LEVEL.DEBUG);
 
             loadUIM();
@@ -41,11 +32,10 @@ public class MainClassMy {
             new BackVocalFrame();
 
         } catch (Exception e) {
-            Out.Print("Has error in main: " + e.getMessage(), Out.LEVEL.ERROR);
+            Out.Print(MainClassMy.class, Out.LEVEL.ERROR, "Has error in main: " + e.getMessage());
             e.printStackTrace();
         }
     }
-
 
     private static void loadUIM() {
         Out.Print(MainClassMy.class, Out.LEVEL.DEBUG, "Set the UIManagers view.");
@@ -55,21 +45,13 @@ public class MainClassMy {
         } catch (Exception e) {
             try {UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception e2) {
-                Out.Print("Has a some problem with a loading UI manager..", Out.LEVEL.WARN);
+                Out.Print(MainClassMy.class, Out.LEVEL.WARN, "Has a some problem with a loading UI manager..");
             }
         }
     }
 
-
-    private static void buildIOM() {
-        IOM.setConsoleOutOn(false);
-        IOM.add(IOM.HEADERS.CONFIG, Paths.get("./resources/config.prop").toFile());
-
-
-    }
-
     private static void checkImportantDirectoriesExists() throws IOException {
-        Out.Print("Check the important directories...");
+        Out.Print(MainClassMy.class, Out.LEVEL.DEBUG, "Check the important directories...");
         importantDirs = new Path[] {
                 Paths.get("./resources/audio/music"),
                 Paths.get("./resources/audio/sound"),
@@ -86,9 +68,11 @@ public class MainClassMy {
     }
 
     public static void exit(CodesMy code) {
-        IOM.saveAll();
-
-        Out.Print("Finish with code: " + code);
+        Out.Print(MainClassMy.class, Out.LEVEL.DEBUG, "Finish with code: " + code);
         System.exit(code.code());
+    }
+
+    public static Long getStartTime() {
+        return startTime;
     }
 }
