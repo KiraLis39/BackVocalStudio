@@ -388,82 +388,85 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
 
             executor = Executors.newFixedThreadPool(2);
             executor.execute(() -> {
-                try {
-                    for (PlayDataItemMy weakdayItem : getWeekdayItems()) {
-                        if (!weakdayItem.getName().equalsIgnoreCase(today)) {
-                            continue;
-                        }
-
-                        if (!weakdayItem.inSchedulingTimeAccept()) {
-                            if (weakdayItem.isPlayed()) {
-                                weakdayItem.stop();
-                                JOptionPane.showConfirmDialog(BackVocalFrame.this, "Timer out! Music has stopped.", "Timer out:", JOptionPane.DEFAULT_OPTION);
-                            }
-                        } else {
-                            if (weakdayItem.getPlayPane().isEmpty()) {
+                while(!executor.isShutdown()) {
+                    try {
+                        for (PlayDataItemMy weakdayItem : getWeekdayItems()) {
+                            if (!weakdayItem.getName().equalsIgnoreCase(today)) {
                                 continue;
                             }
 
-                            if (!weakdayItem.isPlayed() && !weakdayItem.isPaused() && !weakdayItem.isHandStopped()) {
-                                weakdayItem.play();
-                                weakdayItem.setSelected(true);
+                            if (!weakdayItem.inSchedulingTimeAccept()) {
+                                if (weakdayItem.isPlayed()) {
+                                    weakdayItem.stop();
+                                    JOptionPane.showConfirmDialog(BackVocalFrame.this, "Timer out! Music has stopped.", "Timer out:", JOptionPane.DEFAULT_OPTION);
+                                }
+                            } else {
+                                if (weakdayItem.getPlayPane().isEmpty()) {
+                                    continue;
+                                }
+
+                                if (!weakdayItem.isPlayed() && !weakdayItem.isPaused() && !weakdayItem.isHandStopped()) {
+                                    weakdayItem.play();
+                                    weakdayItem.setSelected(true);
+                                }
                             }
+
                         }
-
+                    } catch (Exception e) {
+                        Out.Print(getClass(), Out.LEVEL.WARN, "Exception into play executor: " + e.getMessage());
+                        e.printStackTrace();
                     }
-                } catch (Exception e) {
-                    Out.Print(getClass(), Out.LEVEL.WARN, "Exception into play executor: " + e.getMessage());
-                    e.printStackTrace();
-                }
 
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    Out.Print(BackVocalFrame.class, Out.LEVEL.WARN, "Play executor was interrupted incorrectly.");
-                    Thread.currentThread().interrupt();
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        Out.Print(BackVocalFrame.class, Out.LEVEL.WARN, "Play executor was interrupted incorrectly.");
+                        Thread.currentThread().interrupt();
+                    }
                 }
             });
             executor.execute(() -> {
                 Out.Print(BackVocalFrame.class, Out.LEVEL.INFO, "== Launch time is: <" + sdf.format(System.currentTimeMillis() - MainClassMy.getStartTime()) + "> ==");
-
-                try {
-                    for (PlayDataItemMy weakdayItem : getWeekdayItems()) {
-                        if (!weakdayItem.getName().equalsIgnoreCase(today)) {
-                            continue;
-                        }
-
-                        String time;
-                        ArrayList<AlarmItem> ail = weakdayItem.getAlarmData();
-                        for (AlarmItem s : ail) {
-                            if (s.isWasPlayed()) {
+                while(!executor.isShutdown()) {
+                    try {
+                        for (PlayDataItemMy weakdayItem : getWeekdayItems()) {
+                            if (!weakdayItem.getName().equalsIgnoreCase(today)) {
                                 continue;
                             }
 
-                            time = s.getTime();
-                            if (weakdayItem.isTimeCome(time)) {
-                                weakdayItem.pause();
-                                weakdayItem.playAlarm(s.getTrack());
-                                s.wasPlayed(true);
-                                while (weakdayItem.alarmThreadIsAlive()) {
-                                    Thread.yield();
+                            String time;
+                            ArrayList<AlarmItem> ail = weakdayItem.getAlarmData();
+                            for (AlarmItem s : ail) {
+                                if (s.isWasPlayed()) {
+                                    continue;
                                 }
-                                weakdayItem.resume();
+
+                                time = s.getTime();
+                                if (weakdayItem.isTimeCome(time)) {
+                                    weakdayItem.pause();
+                                    weakdayItem.playAlarm(s.getTrack());
+                                    s.wasPlayed(true);
+                                    while (weakdayItem.alarmThreadIsAlive()) {
+                                        Thread.yield();
+                                    }
+                                    weakdayItem.resume();
+                                }
                             }
+
                         }
 
+                    } catch (Exception e) {
+                        Out.Print(getClass(), Out.LEVEL.WARN, "Exception into alarms executor: " + e.getMessage());
+                        e.printStackTrace();
                     }
 
-                } catch (Exception e) {
-                    Out.Print(getClass(), Out.LEVEL.WARN, "Exception into alarms executor: " + e.getMessage());
-                    e.printStackTrace();
-                }
-
-                currentTime.setText("<html>Now: <b color='YELLOW'>" + sdf.format(System.currentTimeMillis()) + "</b></html>");
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    Out.Print(BackVocalFrame.class, Out.LEVEL.WARN, "Alarms executor was interrupted incorrectly.");
-                    Thread.currentThread().interrupt();
+                    currentTime.setText("<html>Now: <b color='YELLOW'>" + sdf.format(System.currentTimeMillis()) + "</b></html>");
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        Out.Print(BackVocalFrame.class, Out.LEVEL.WARN, "Alarms executor was interrupted incorrectly.");
+                        Thread.currentThread().interrupt();
+                    }
                 }
             });
         } catch (Exception e) {
