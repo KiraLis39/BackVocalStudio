@@ -398,7 +398,12 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                             if (!weakdayItem.inSchedulingTimeAccept()) {
                                 if (weakdayItem.isPlayed()) {
                                     weakdayItem.stop();
-                                    JOptionPane.showConfirmDialog(BackVocalFrame.this, "Timer out! Music has stopped.", "Timer out:", JOptionPane.DEFAULT_OPTION);
+                                    weakdayItem.repaint();
+                                    JOptionPane.showConfirmDialog(BackVocalFrame.this,
+                                            "<html><b>Время вышло!</b>" +
+                                                    "<br>Воспроизведение '" + weakdayItem.getName() + "' остановлено.",
+                                            "Time-out:",
+                                            JOptionPane.DEFAULT_OPTION);
                                 }
                             } else {
                                 if (weakdayItem.getPlayPane().isEmpty()) {
@@ -424,6 +429,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                         Thread.currentThread().interrupt();
                     }
                 }
+                Out.Print(BackVocalFrame.class, Out.LEVEL.ACCENT, "Play executor ended.");
             });
             executor.execute(() -> {
                 Out.Print(BackVocalFrame.class, Out.LEVEL.INFO, "== Launch time is: <" + sdf.format(System.currentTimeMillis() - MainClassMy.getStartTime()) + "> ==");
@@ -442,7 +448,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                                 }
 
                                 time = s.getTime();
-                                if (weakdayItem.isTimeCome(time)) {
+                                if (weakdayItem.isTimeCome(time) && weakdayItem.inSchedulingTimeAccept()) {
                                     weakdayItem.pause();
                                     weakdayItem.playAlarm(s.getTrack());
                                     s.wasPlayed(true);
@@ -468,6 +474,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                         Thread.currentThread().interrupt();
                     }
                 }
+                Out.Print(BackVocalFrame.class, Out.LEVEL.ACCENT, "Alarms executor ended.");
             });
         } catch (Exception e) {
             Out.Print(getClass(), Out.LEVEL.WARN, "Executors loading exception: " + e.getMessage());

@@ -25,7 +25,7 @@ public class MainClassMy {
             Out.setLogsCountAllow(5);
 
             Out.Print(MainClassMy.class, Out.LEVEL.INFO, "Start!");
-            Out.setErrorLevel(Out.LEVEL.DEBUG);
+            Out.setErrorLevel(Out.LEVEL.ACCENT);
 
             loadUIM();
 
