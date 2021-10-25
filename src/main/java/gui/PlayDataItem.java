@@ -3,17 +3,17 @@ package gui;
 import fox.components.AlarmItem;
 import fox.components.PlayPane;
 import fox.fb.FoxFontBuilder;
+import fox.ia.InputAction;
 import fox.out.Out;
 import fox.render.FoxRender;
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.FactoryRegistry;
 import javazoom.jl.player.Player;
 import javazoom.jl.player.advanced.AdvancedPlayer;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
@@ -23,14 +23,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 
-public class PlayDataItemMy extends JPanel implements MouseListener, ActionListener {
-//    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+public class PlayDataItem extends JPanel implements MouseListener, ActionListener {
     private SimpleDateFormat weakday = new SimpleDateFormat("EEEE", Locale.US);
 
     private Player player;
@@ -47,7 +46,7 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
     private Color defBkgColor = Color.GRAY, secondColor, defTextColor = Color.BLACK;
     private String timerIn = "00:00:00", timerOut = "23:59:59";
 
-    private boolean isSelected = false, repeat, isOver, isPlaying, isPaused, isHandStopped = false;
+    private boolean isSelected = false, repeat, isOver, isPlaying, isHandStopped = false, alarmIsPlayed = false;
     private Thread musicThread, alarmThread;
     private int pausedOnFrame, indexOfPlayed;
 
@@ -56,6 +55,7 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
     private JFileChooser fch = new JFileChooser("./resources/audio/");
     private JButton alarmsBtn;
     private Color alarmsBack = Color.GRAY;
+    private LocalDateTime date;
 
     @Override
     public void paintComponent(Graphics g) {
@@ -63,34 +63,32 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
         Graphics2D g2D = FoxRender.setMedRender((Graphics2D) g);
 
         // backbround:
-        if (playpane == null || playpane.isEmpty()) {
-            g2D.setColor(defBkgColor);
-            g2D.fillRoundRect(0, 0, getWidth() - 3, getHeight() - 2, 12, 12);
+        if (playpane == null || playpane.isEmpty()) {g2D.setColor(defBkgColor);
         } else {
             if (isOver) {
-                g2D.setColor(Color.YELLOW);
-                g2D.fillRoundRect(0, 0, getWidth() - 3, getHeight() - 2, 12, 12);
                 defTextColor = Color.BLACK;
+                g2D.setColor(Color.YELLOW);
             } else {
                 if (getName().equals("Sunday") || getName().equals("Saturday")) {
+                    defTextColor = Color.BLACK;
                     g2D.setColor(Color.CYAN.darker());
                 } else {
+                    defTextColor = Color.WHITE;
                     g2D.setColor(Color.DARK_GRAY);
                 }
-                g2D.fillRoundRect(0, 0, getWidth() - 3, getHeight() - 2, 12, 12);
-                defTextColor = Color.WHITE;
             }
         }
+        g2D.fillRoundRect(0, 0, getWidth() - 3, getHeight() - 2, 12, 12);
 
         if (isSelected) {
             g2D.setStroke(new BasicStroke(2));
             g2D.setColor(Color.GREEN);
             g2D.drawRoundRect(1,1,getWidth() - 3,getHeight() - 3,9,9);
-//            g2D.dispose();
         }
 
         Color justExistColor = new Color(1.0f, 0.8f, 0.25f, 0f);
         Color existAndPlayedColor = new Color(0.0f, 1.0f, 0.0f, 0f);
+        Color alarmSoundedColor = new Color(1.0f, 0.25f, 0.0f, 0f);
 
         // oval:
         float opacity = 0.75f;
@@ -98,7 +96,7 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
             g2D.setColor(new Color(0.35f, 0.35f, 0.35f, opacity));
         } else {
             opacity = 0f;
-            Color drawColor = isPlaying ? existAndPlayedColor : justExistColor;
+            Color drawColor = alarmIsPlayed ? alarmSoundedColor : isPlaying ? existAndPlayedColor : justExistColor;
 
             for (int i = 0; i < 10; i++) {
                 opacity += 0.07;
@@ -107,7 +105,6 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
                 g2D.fillRoundRect(getWidth() - 33 + i, 3 + (i), (int) (30.5f - (i * 2)), 19 - (i * 2), 15, 15);
             }
 
-            opacity = 1f;
             g2D.setColor(drawColor);
 
         }
@@ -128,7 +125,7 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
     }
 
 
-    public PlayDataItemMy(String name, String _timerIn, String _timerOut, Boolean _repeat) {
+    public PlayDataItem(String name, String _timerIn, String _timerOut, Boolean _repeat) {
         alarmList = new JList(arm);
 
         setName(name);
@@ -326,7 +323,7 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
                                 }
                                 setPreferredSize(new Dimension(32, 32));
                                 setActionCommand("alarmBtn");
-                                addActionListener(PlayDataItemMy.this);
+                                addActionListener(PlayDataItem.this);
                             }
                         };
 
@@ -339,15 +336,13 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
 
                                     @Override
                                     public void paintComponent(Graphics g) {
-//                                        if (im == null) {
-                                            try {
-                                                if (isPlaying) {
-                                                    im = ImageIO.read(new File("./resources/icons/playPressed.png"));
-                                                } else {
-                                                    im = ImageIO.read(new File("./resources/icons/play.png"));
-                                                }
-                                            } catch (IOException e) {e.printStackTrace();}
-//                                        }
+                                        try {
+                                            if (isPlaying) {
+                                                im = ImageIO.read(new File("./resources/icons/playPressed.png"));
+                                            } else {
+                                                im = ImageIO.read(new File("./resources/icons/play.png"));
+                                            }
+                                        } catch (IOException e) {e.printStackTrace();}
 
                                         g.drawImage(im, 1, 1, getWidth() - 4, btnsDim, null);
                                     }
@@ -362,7 +357,7 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
                                         setFocusPainted(false);
                                         setPreferredSize(new Dimension(32, 32));
                                         setActionCommand("play");
-                                        addActionListener(PlayDataItemMy.this);
+                                        addActionListener(PlayDataItem.this);
                                     }
                                 };
 
@@ -389,7 +384,7 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
                                         setFocusPainted(false);
                                         setPreferredSize(new Dimension(32, 32));
                                         setActionCommand("next");
-                                        addActionListener(PlayDataItemMy.this);
+                                        addActionListener(PlayDataItem.this);
                                     }
                                 };
 
@@ -416,7 +411,7 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
                                         setFocusPainted(false);
                                         setPreferredSize(new Dimension(32, 32));
                                         setActionCommand("stop");
-                                        addActionListener(PlayDataItemMy.this);
+                                        addActionListener(PlayDataItem.this);
                                     }
                                 };
 
@@ -467,7 +462,7 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
 
     public synchronized void saveToFile() {
         try {
-            Out.Print(PlayDataItemMy.class, Out.LEVEL.INFO, "Try to save " + getName() + " data...");
+            Out.Print(PlayDataItem.class, Out.LEVEL.INFO, "Try to save " + getName() + " data...");
 
             try (OutputStreamWriter osw = new OutputStreamWriter(
                     new FileOutputStream("./resources/scheduler/" + getName() + ".meta"), StandardCharsets.UTF_8)) {
@@ -477,7 +472,7 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
                             "NN_REP_EE" + repeat
                 );
             } catch (Exception e) {
-                Out.Print(PlayDataItemMy.class, Out.LEVEL.WARN, "PlayDataItem cant reached save to .meta: " + e.getMessage());
+                Out.Print(PlayDataItem.class, Out.LEVEL.WARN, "PlayDataItem cant reached save to .meta: " + e.getMessage());
                 e.printStackTrace();
             }
 
@@ -487,7 +482,7 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
                     osw.write(arm.get(i).getTime() + ">" + arm.get(i).getTrack() + "\r\n");
                 }
             } catch (Exception e) {
-                Out.Print(PlayDataItemMy.class, Out.LEVEL.WARN, "PlayDataItem cant reached save to .alarms: " + e.getMessage());
+                Out.Print(PlayDataItem.class, Out.LEVEL.WARN, "PlayDataItem cant reached save to .alarms: " + e.getMessage());
                 e.printStackTrace();
             }
 
@@ -499,76 +494,34 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
                 }
 
             } catch (Exception e) {
-                Out.Print(PlayDataItemMy.class, Out.LEVEL.WARN, "PlayDataItem cant reached save to .list: " + e.getMessage());
+                Out.Print(PlayDataItem.class, Out.LEVEL.WARN, "PlayDataItem cant reached save to .list: " + e.getMessage());
                 e.printStackTrace();
             }
 
-            Out.Print(PlayDataItemMy.class, Out.LEVEL.INFO, "Saving day " + getName() + " successfully accomplished!");
+            Out.Print(PlayDataItem.class, Out.LEVEL.INFO, "Saving day " + getName() + " successfully accomplished!");
         } catch (Exception e) {
             e.printStackTrace();
-            Out.Print(PlayDataItemMy.class, Out.LEVEL.WARN, "Error with saving PlayDataItemMy: " + e.getMessage());
+            Out.Print(PlayDataItem.class, Out.LEVEL.WARN, "Error with saving PlayDataItemMy: " + e.getMessage());
         }
-    }
-
-    public boolean inSchedulingTimeAccept() {
-        boolean accept = true;
-        String nowTime = new Date().toString().split(" ")[3];
-
-        int nowHour = Integer.parseInt(nowTime.split(":")[0]);
-        int nowMinute = Integer.parseInt(nowTime.split(":")[1]);
-        int nowSecond = Integer.parseInt(nowTime.split(":")[2]);
-
-        int inHour = Integer.parseInt(timerIn.split(":")[0]);
-        int inMinute = Integer.parseInt(timerIn.split(":")[1]);
-        int inSecond = Integer.parseInt(timerIn.split(":")[2]);
-
-        int outHour = Integer.parseInt(timerOut.split(":")[0]);
-        int outMinute = Integer.parseInt(timerOut.split(":")[1]);
-        int outSecond = Integer.parseInt(timerOut.split(":")[2]);
-
-        if (nowHour > outHour) {
-//            System.err.println("Point 00");
-            accept = false;
-        } else if (nowHour == outHour) {
-            if (nowMinute > outMinute) {
-//                System.err.println("Point FW");
-                accept = false;
-            } else if (nowMinute == outMinute) {
-                if (nowSecond > outSecond) {
-//                    System.err.println("Point BE");
-                    accept = false;
-                }
-            }
-        }
-
-        if (nowHour < inHour) {
-//            System.err.println("Point 01");
-            accept = false;
-        } else if (nowHour == inHour && nowMinute < inMinute) {
-//            System.err.println("Point 02");
-            accept = false;
-        } else if (nowHour == inHour && nowMinute == inMinute && nowSecond < inSecond) {
-//            System.err.println("Point 03");
-            accept = false;
-        }
-
-        return accept;
     }
 
 
     // Audio control:
-    public synchronized void play() {
-        if (playpane == null) {
-            JOptionPane.showConfirmDialog(this, "Playlist is empty!", "Info:", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null);
+    public synchronized void play(int index) {
+        if (index != -1) {indexOfPlayed = index;}
+
+        if (playpane == null || playpane.getTrack(indexOfPlayed) == null) {
+            JOptionPane.showConfirmDialog(this, "Плейлист пуст!", "Инфо:", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null);
             return;
         }
         if (indexOfPlayed == -1) {return;}
-        if (isPlaying) {stop();}
+        if (isPlaying || (alarmThread != null && alarmThread.isAlive())) {stop();}
 
         try {
             Path tr = playpane.getTrack(indexOfPlayed);
-            Out.Print(PlayDataItemMy.class, Out.LEVEL.INFO, "The track '" + tr.toFile().getName() + "' is played now...");
+            Out.Print(PlayDataItem.class, Out.LEVEL.DEBUG, "The track '" + tr.toFile().getName() + "' is played now...");
             musicThread = new Thread(() -> {
+                repaint();
                 while (indexOfPlayed < playpane.getRowsCount()) {
                     BackVocalFrame.updatePlayedLabelText();
 
@@ -585,7 +538,7 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
                     }
 
                     indexOfPlayed++;
-                    if (repeat && !isPaused && !isHandStopped) {
+                    if (repeat && !isHandStopped) {
                         if (indexOfPlayed >= playpane.getRowsCount()) {
                             System.out.println("REPEAT INITIATED!");
                             indexOfPlayed = 0;
@@ -595,7 +548,7 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
             });
             musicThread.start();
         } catch (Exception e) {
-            Out.Print(PlayDataItemMy.class, Out.LEVEL.ACCENT, "Play-method exception: " + e.getMessage());
+            Out.Print(PlayDataItem.class, Out.LEVEL.ACCENT, "Play-method exception: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -605,25 +558,7 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
             indexOfPlayed = 0;
         }
         if (playpane.getRowsCount() > 0) {
-            play();
-        }
-    }
-
-    public synchronized void pause() {
-        try {
-            isPaused = true;
-//            pausedOnFrame = player.getPosition();
-            stop();
-            System.out.println("PAUSED! On frame #" + pausedOnFrame);
-        } catch (Exception f) {/* IGNORE */}
-    }
-
-    public synchronized void resume() {
-        System.out.println("RESUMED! From frame #" + pausedOnFrame);
-
-        if (isPaused) {
-            isPaused = false;
-            play();
+            play(-1);
         }
     }
 
@@ -654,9 +589,12 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
 
     public synchronized void playAlarm(Path alarmFilePath) {
         BackVocalFrame.setPlayedLabelText("<html><b color='RED'>Alarm:</b> " + alarmFilePath.toFile().getName());
+
         alarmThread = new Thread(() -> {
             try {
                 URI uri = alarmFilePath.toFile().toURI();
+                alarmIsPlayed = true;
+                BackVocalFrame.getFrame().repaint();
                 try (
                         InputStream s = uri.toURL().openStream();
                         BufferedInputStream mp3 = new BufferedInputStream(s)) {
@@ -664,6 +602,8 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
                 }
             } catch (IOException | JavaLayerException e) {
                 e.printStackTrace();
+            } finally {
+                alarmIsPlayed = false;
             }
         });
         alarmThread.start();
@@ -679,7 +619,8 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
         try {
             playpane.add(path);
         } catch (Exception e) {
-            Out.Print(PlayDataItemMy.class, Out.LEVEL.WARN, "Exception by adding track: " + e.getMessage());
+            Out.Print(PlayDataItem.class, Out.LEVEL.WARN, "Exception by adding track: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -691,7 +632,6 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
             BackVocalFrame.showPlayList(playpane);
 
             if (playpane != null && playpane.getRowsCount() > 0) {
-//                BackVocalFrame.setProgress(100 / playpane.getRowsCount() * (indexOfPlayed + 1));
                 BackVocalFrame.updatePlayedLabelText();
             }
         }
@@ -752,8 +692,6 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
         alarmsBack = Color.GREEN;
     }
 
-    public boolean isPaused() {return isPaused;}
-
     public ArrayList<AlarmItem> getAlarmData() {
         ArrayList<AlarmItem> result = new ArrayList<>();
 
@@ -768,69 +706,63 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
         return alarmThread.isAlive();
     }
 
-    public boolean isTimeCome(String time) {
-        if (time.length() == 8 && time.contains(":")) {
-            String nowTime = new Date().toString().split(" ")[3];
-            int now = Integer.parseInt(nowTime.replaceAll(":", ""));
-            int need = Integer.parseInt(time.replaceAll(":", ""));
-//            System.out.println("NOW: " + nowTime + "; alarm check time: " + time + "; pass: " + (now - need));
+    public boolean inSchedulingTimeAccept() {
+        date = LocalDateTime.now();
 
-            if (now > need && now - need < 100) {
-                return true;
-            }
+        String now = "", on = "", off = "";
+        String[] nowNotParsed = date.toString().split("T")[1].split("\\.")[0].split(":");
+        for (String s : nowNotParsed) {
+            if (s.length() == 1) {s = "0" + s;}
+            now += s;
         }
+        String[] onNotParsed = timerIn.split(":");
+        for (String s : onNotParsed) {
+            if (s.length() == 1) {s = "0" + s;}
+            on += s;
+        }
+        String[] offNotParsed = timerOut.split(":");
+        for (String s : offNotParsed) {
+            if (s.length() == 1) {s = "0" + s;}
+            off += s;
+        }
+
+
+        int nowParsed = Integer.parseInt(now);
+        int inParsed = Integer.parseInt(on);
+        int outParsed = Integer.parseInt(off);
+//        System.out.println("Now: " + nowParsed + "; On: " + inParsed + "; Off: " + outParsed);
+
+        if (nowParsed < inParsed || nowParsed >= outParsed) {
+//            System.out.println("FALSE becouse: " + (nowParsed < inParsed ? "now < on" : nowParsed >= outParsed ? "now >= off" : "unknown") + " (now: " + nowParsed + ", off: " + outParsed + ")");
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean isTimeCome(String timeNotParsed) {
+        String time = "";
+        String[] timeNotParsedArr = timeNotParsed.split(":");
+        for (String s : timeNotParsedArr) {
+            if (s.length() == 1) {s = "0" + s;}
+            time += s;
+        }
+
+        String nowTime = LocalDateTime.now().toString();
+        int now = Integer.parseInt(nowTime.split("T")[1].split("\\.")[0].replaceAll(":", ""));
+        int need = Integer.parseInt(time);
+//        System.out.println("Now: " + now + "; Need: " + need);
+
+        if (now > need && now - need < 100) {
+            return true;
+        }
+
         return false;
     }
 
     public int getIndexOfPlayed() {return indexOfPlayed;}
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        switch (e.getActionCommand()) {
-
-            case "alarmBtn": new AlarmsDialog(BackVocalFrame.getFrame());
-                break;
-
-            case "play":
-                if (inSchedulingTimeAccept()) {
-                    isHandStopped = false;
-                    stop();
-
-                    if (playpane.getSelectedIndex() != playpane.getPlayedIndex()) {
-                        indexOfPlayed = playpane.getSelectedIndex();
-                        play();
-                        return;
-                    }
-
-                    play();
-                    setSelected(true);
-                    playpane.repaint();
-                } else {
-                    JOptionPane.showConfirmDialog(PlayDataItemMy.this, "Its not a schedule time!", "Not yet:", JOptionPane.DEFAULT_OPTION);
-                }
-                break;
-
-            case "next":
-                if (inSchedulingTimeAccept()) {
-                    stop();
-//                  playpane.selectRow(playpane.getSelectedIndex() + 1 >= playpane.getRowsCount() ? 0 : playpane.getSelectedIndex() + 1);
-                    playNext();
-//                    setSelected(true);
-
-                    playpane.repaint();
-                }
-                break;
-
-            case "stop":
-                isHandStopped = true;
-                stop();
-                break;
-
-
-
-            default:
-        }
-    }
+    public boolean isAlarmPlayed() {return alarmIsPlayed;}
 
 
     // subframes:
@@ -865,8 +797,9 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
                                 {
                                     setBackground(new Color(0.75f,1.0f,0.75f,1.0f));
                                     addActionListener(e -> {
+                                        String now = LocalDateTime.now().toString().split("T")[1].split("\\.")[0];
                                         String alarmInitTime = JOptionPane.showInputDialog(AlarmsDialog.this,
-                                                        "Старт в:", "00:00:00");
+                                                        "Старт в:", now);
                                         alarmInitTime = alarmInitTime.trim();
 
                                         fch.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -903,21 +836,7 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
                             JButton remAlarmBtn = new JButton("- alarm") {
                                 {
                                     setBackground(new Color(1.0f,0.75f,0.75f,1.0f));
-                                    addActionListener(new ActionListener() {
-                                        @Override
-                                        public void actionPerformed(ActionEvent e) {
-                                            AlarmItem toDelete = alarmList.getSelectedValue();
-                                            if (toDelete == null) {return;}
-                                            int req = JOptionPane.showConfirmDialog(AlarmsDialog.this,
-                                                    "Удалить alarm от " + toDelete.getTime() + "?", "Уверен:", JOptionPane.OK_OPTION, JOptionPane.QUESTION_MESSAGE);
-                                            if (req == 0) {
-                                                arm.removeElement(toDelete);
-                                                if (arm.size() == 0) {
-                                                    alarmsBack = Color.DARK_GRAY;
-                                                }
-                                            }
-                                        }
-                                    });
+                                    addActionListener(e -> deleteAlarmRequest());
                                 }
                             };
 
@@ -933,14 +852,95 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
 
             add(basePane);
 
+            InputAction.add("alDia", basePane);
+            InputAction.set("alDia", "deleteAlarm", KeyEvent.VK_DELETE, 0, new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    if (e.getID() == 1001) {
+                        deleteAlarmRequest();
+                    }
+                }
+            });
+            InputAction.set("alDia", "close", KeyEvent.VK_ESCAPE, 0, new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    dispose();
+                }
+            });
+
             pack();
             setLocationRelativeTo(null);
             setVisible(true);
+        }
+
+        private void deleteAlarmRequest() {
+            AlarmItem toDelete = alarmList.getSelectedValue();
+            if (toDelete == null) {return;}
+            int req = JOptionPane.showConfirmDialog(AlarmsDialog.this,
+                    "Удалить alarm от " + toDelete.getTime() + "?", "Уверен:", JOptionPane.OK_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if (req == 0) {
+                arm.removeElement(toDelete);
+                if (arm.size() == 0) {
+                    alarmsBack = Color.DARK_GRAY;
+                }
+            }
         }
     }
 
 
     // Listeners:
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        switch (e.getActionCommand()) {
+
+            case "alarmBtn": new AlarmsDialog(BackVocalFrame.getFrame());
+                break;
+
+            case "play":
+                if (isAlarmPlayed()) {return;}
+
+                if (inSchedulingTimeAccept()) {
+                    isHandStopped = false;
+                    stop();
+
+                    if (playpane.getSelectedIndex() != playpane.getPlayedIndex()) {
+                        indexOfPlayed = playpane.getSelectedIndex();
+                        play(-1);
+                        return;
+                    }
+
+                    play(-1);
+                    BackVocalFrame.resetDownPaneSelect();
+                    setSelected(true);
+                } else {
+                    JOptionPane.showConfirmDialog(PlayDataItem.this, "Время воспроизведения истекло!", "Тайм-аут:", JOptionPane.DEFAULT_OPTION);
+                }
+                break;
+
+            case "next":
+                if (isAlarmPlayed()) {return;}
+
+                if (inSchedulingTimeAccept()) {
+                    stop();
+                    playNext();
+                    BackVocalFrame.resetDownPaneSelect();
+                    setSelected(true);
+                }
+                break;
+
+            case "stop":
+                isHandStopped = true;
+                stop();
+                BackVocalFrame.resetDownPaneSelect();
+                setSelected(true);
+                break;
+
+
+
+            default:
+        }
+    }
+
     @Override
     public void mouseClicked(MouseEvent e) {
         if (isSelected) {
@@ -949,8 +949,8 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
         }
         BackVocalFrame.resetDownPaneSelect();
         setSelected(true);
+        BackVocalFrame.getFrame().repaint();
     }
-
     @Override
     public void mouseEntered(MouseEvent e) {
         isOver = true;
@@ -958,21 +958,21 @@ public class PlayDataItemMy extends JPanel implements MouseListener, ActionListe
         defTextColor = Color.BLACK;
         repaint();
     }
-
     @Override
     public void mouseExited(MouseEvent e) {
         isOver = false;
         defBkgColor = secondColor;
         repaint();
     }
+    public void mousePressed(MouseEvent e) {}
+    public void mouseReleased(MouseEvent e) {}
 
+
+    // other:
     @Override
     public void setBackground(Color bg) {
         super.setBackground(isSelected ? Color.GREEN : bg == null ? defBkgColor : bg);
     }
-
-    public void mousePressed(MouseEvent e) {}
-    public void mouseReleased(MouseEvent e) {}
 
     @Override
     public String toString() {

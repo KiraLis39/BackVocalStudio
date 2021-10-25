@@ -1,14 +1,14 @@
 package gui;
 
-import door.MainClassMy;
-import fox.components.AlarmItem;
+import door.DayCore;
+import door.MainClass;
 import fox.components.ListRow;
 import fox.components.PlayPane;
 import fox.fb.FoxFontBuilder;
+import fox.ia.InputAction;
 import fox.out.Out;
-import registry.CodesMy;
-import registry.RegistryMy;
-
+import registry.Codes;
+import registry.Registry;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -18,26 +18,14 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.MalformedInputException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
-
-public class BackVocalFrame extends JFrame implements WindowListener, ComponentListener {
+public class BackVocalFrame extends JFrame implements WindowListener, ComponentListener, ActionListener {
     private static TrayIcon trayIcon;
     private static SystemTray tray;
-    private static ExecutorService executor;
+    private static ImageIcon ico;
 
     private static BackVocalFrame frame;
     private static JPanel basePane, centerPlaylistsPane, playDatePane, downBtnsPane, downShedulePane, rightInfoPane;
@@ -48,33 +36,33 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
     private static JFileChooser fch = new JFileChooser("./resources/audio/");
     private static JToolBar toolBar;
 
-    private static final PlayDataItemMy[] dayItems = new PlayDataItemMy[7];
-    private static final String[] days = new String[]{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
-
-    private static final Font headersFontSmall = FoxFontBuilder.setFoxFont(FoxFontBuilder.FONT.ARIAL_NARROW, 14, true);
-    private static final Font btnsFont = FoxFontBuilder.setFoxFont(FoxFontBuilder.FONT.ARIAL_NARROW, 14, false);
-    private static final Font btnsFont2 = FoxFontBuilder.setFoxFont(FoxFontBuilder.FONT.ARIAL_NARROW, 14, true);
-    private static final Font infoFont0 = FoxFontBuilder.setFoxFont(FoxFontBuilder.FONT.CANDARA, 14, true);
-
     private static int daysCounter = 0, maxDownPaneHeight = 220;
-    private final SimpleDateFormat weakday = new SimpleDateFormat("EEEE", Locale.US);
-    private final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-
     private static boolean isInfoShowed;
+    private static ActionListener alist;
+    private static String alSt = "*** Воспроизведение оповещения ***\n(жми стоп для прерывания)";
 
+    @Override
+    public void paint(Graphics g) {
+        super.paint(g);
+        if (getSelectedItem().isAlarmPlayed()) {
+            g.setFont(Registry.alarmFont0);
+            g.setColor(Color.ORANGE);
+            g.drawString(alSt, (int) (getWidth() / 2 - FoxFontBuilder.getStringWidth(g, alSt) / 2), getHeight() / 2);
+        }
+    }
 
     public BackVocalFrame() {
         frame = this;
-        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-
+        alist = this;
         Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "Build the frame...");
 
         try {
-            setIconImage(new ImageIcon(ImageIO.read(new File("./resources/icons/0.png"))).getImage());
+            ico = new ImageIcon(ImageIO.read(new File("./resources/icons/0.png")));
+            setIconImage(ico.getImage());
         } catch (IOException e) {
             e.printStackTrace();
         }
-        setTitle("Back vocal studio v." + RegistryMy.version);
+        setTitle("Back vocal studio v." + Registry.version);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
         basePane = new JPanel(new BorderLayout(1, 3)) {
@@ -82,11 +70,8 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                 setBackground(Color.BLACK);
 
                 centerPlaylistsPane = new JPanel(new BorderLayout(3, 3)) {
-                    {
-                        setOpaque(false);
-                    }
+                    {setOpaque(false);}
                 };
-
                 playListsScroll = new JScrollPane(centerPlaylistsPane) {
                     {
                         setBorder(null);
@@ -99,262 +84,8 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                         setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
                     }
                 };
-
-                rightInfoPane = new JPanel(new GridLayout(18, 1, 0, 0)) {
-                    {
-                        setBackground(Color.BLACK);
-                        setBorder(new EmptyBorder(3, 3, 0, 0));
-                        setVisible(false);
-
-                        add(new JLabel("<Track info>") {{
-                            setForeground(Color.WHITE);
-                            setFont(infoFont0);
-                            setHorizontalAlignment(JLabel.CENTER);
-                        }});
-                        currentTime = new JLabel(sdf.format(System.currentTimeMillis())) {{
-                            setForeground(Color.WHITE);
-                            setFont(infoFont0);
-                            setHorizontalAlignment(JLabel.LEFT);
-                        }};
-                        add(currentTime);
-                        add(new JSeparator());
-
-                        selTrackName = new JLabel() {{
-                            setForeground(Color.WHITE);
-                            setFont(infoFont0);
-                            setHorizontalAlignment(JLabel.LEFT);
-                        }};
-                        selTrackPath = new JLabel() {{
-                            setForeground(Color.WHITE);
-                            setFont(infoFont0);
-                            setHorizontalAlignment(JLabel.LEFT);
-                        }};
-                        selTrackDuration = new JLabel() {{
-                            setForeground(Color.WHITE);
-                            setFont(infoFont0);
-                            setHorizontalAlignment(JLabel.LEFT);
-                        }};
-                        selTrackSize = new JLabel() {{
-                            setForeground(Color.WHITE);
-                            setFont(infoFont0);
-                            setHorizontalAlignment(JLabel.LEFT);
-                        }};
-
-                        add(selTrackName);
-                        add(selTrackPath);
-                        add(selTrackDuration);
-                        add(selTrackSize);
-                    }
-                };
-
-                downShedulePane = new JPanel(new BorderLayout(0, 0)) {
-                    {
-                        setBackground(Color.BLACK);
-
-                        toolBar = new JToolBar("Можно тягать!") {
-                            {
-                                setBorder(new EmptyBorder(0, 0, 1, 0));
-
-                                moveUpBtn = new JButton("Move Up") {
-                                    {
-                                        setBackground(Color.RED);
-                                        setForeground(Color.BLUE);
-                                        setFont(btnsFont2);
-                                        addActionListener(e -> getSelectedItem().moveSelectedUp());
-                                    }
-                                };
-
-                                addTrackBtn = new JButton("+ трек") {
-                                    {
-                                        setForeground(Color.GREEN);
-                                        setFont(btnsFont2);
-                                        addActionListener(e -> {
-                                            fch.setFileSelectionMode(JFileChooser.FILES_ONLY);
-                                            fch.setMultiSelectionEnabled(true);
-                                            fch.setDialogTitle("Выбор треков:");
-                                            FileFilter filter = new FileNameExtensionFilter("MP3 File","mp3");
-                                            fch.setFileFilter(filter);
-
-                                            int result = fch.showOpenDialog(BackVocalFrame.this);
-                                            if (result == JFileChooser.APPROVE_OPTION) {
-                                                ArrayList<Path> res = new ArrayList<>();
-                                                for (File selectedFile : fch.getSelectedFiles()) {
-                                                    res.add(selectedFile.toPath());
-                                                }
-                                                getSelectedItem().getPlayPane().setTracks(res);
-                                            }
-                                        });
-                                    }
-                                };
-
-                                removeBtn = new JButton("- трек") {
-                                    {
-                                        setForeground(Color.RED);
-                                        setFont(btnsFont2);
-                                        addActionListener(new ActionListener() {
-                                            @Override
-                                            public void actionPerformed(ActionEvent e) {
-                                                if (getSelectedItem().getPlayPane().getSelectedIndex() == -1) {
-                                                    return;
-                                                }
-
-                                                int req = JOptionPane.showConfirmDialog(null,
-                                                        "Delete track #" + (getSelectedItem().getPlayPane().getSelectedIndex() + 1) + "?",
-                                                        "Sure?", JOptionPane.WARNING_MESSAGE);
-
-                                                if (req == 0) {
-                                                    getSelectedItem().removeSelected();
-                                                }
-                                            }
-                                        });
-                                    }
-                                };
-
-                                moveDownBtn = new JButton("Move Down") {
-                                    {
-                                        setForeground(Color.BLUE);
-                                        setFont(btnsFont2);
-                                        addActionListener(new ActionListener() {
-                                            @Override
-                                            public void actionPerformed(ActionEvent e) {
-                                                getSelectedItem().moveSelectedDown();
-                                            }
-                                        });
-                                    }
-                                };
-
-                                showInfoBtn = new JButton("Инфо") {
-                                    {
-                                        setForeground(Color.GRAY);
-                                        setFont(btnsFont2);
-                                        addActionListener(new ActionListener() {
-                                            @Override
-                                            public void actionPerformed(ActionEvent e) {
-                                                isInfoShowed = !isInfoShowed;
-                                                rightInfoPane.setVisible(isInfoShowed);
-                                            }
-                                        });
-                                    }
-                                };
-
-                                add(moveUpBtn);
-                                add(new JLabel(" | "));
-                                add(addTrackBtn);
-                                add(removeBtn);
-                                add(new JLabel(" | "));
-                                add(moveDownBtn);
-                                add(new JLabel(" | "));
-                                add(showInfoBtn);
-                            }
-                        };
-
-                        playDatePane = new JPanel(new GridLayout(1, 7, 1, 0)) {
-                            {
-                                setBackground(Color.BLACK);
-                                setBorder(null);
-                            }
-                        };
-
-                        playDateScroll = new JScrollPane(playDatePane) {
-                            {
-                                setBorder(null);
-                                setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-                                setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-                                getVerticalScrollBar().setUnitIncrement(16);
-                            }
-                        };
-
-                        JPanel downPane = new JPanel(new BorderLayout()) {
-                            {
-                                setOpaque(false);
-                                setBorder(new EmptyBorder(1, 0, 0, 0));
-
-                                downBtnsPane = new JPanel(new FlowLayout(0, 3, 3)) {
-                                    {
-                                        setBackground(Color.DARK_GRAY);
-                                        setBorder(new EmptyBorder(0, 0, 1, 0));
-
-                                        bindListBtn = new JButton("Залить из папки") {
-                                            {
-                                                setFont(btnsFont);
-                                                setEnabled(false);
-                                                setFocusPainted(false);
-                                                setBackground(new Color(0.3f, 0.5f, 0.2f, 1.0f));
-                                                setForeground(Color.BLACK);
-                                                addActionListener(e -> {
-                                                    int req = JOptionPane.showConfirmDialog(null,
-                                                            "Перестроить лист?", "Уверен?", JOptionPane.WARNING_MESSAGE);
-
-                                                    if (req == 0) {
-                                                        fch.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-                                                        fch.setMultiSelectionEnabled(false);
-                                                        fch.setDialogTitle("Папка с треками:");
-                                                        FileFilter filter = new FileNameExtensionFilter("MP3 File","mp3");
-                                                        fch.setFileFilter(filter);
-
-                                                        int result = fch.showOpenDialog(BackVocalFrame.this);
-                                                        if (result == JFileChooser.APPROVE_OPTION) {
-                                                            getSelectedItem().getPlayPane().clearTracks();
-                                                            getSelectedItem().getPlayPane().setTracks(fch.getSelectedFile());
-                                                        }
-                                                    }
-                                                });
-                                            }
-                                        };
-
-                                        clearBindBtn = new JButton("Сброс листа") {
-                                            {
-                                                setFont(btnsFont);
-                                                setEnabled(false);
-                                                setFocusPainted(false);
-                                                setBackground(new Color(0.5f, 0.2f, 0.2f, 1.0f));
-                                                setForeground(Color.BLACK);
-                                                addActionListener(new ActionListener() {
-                                                    @Override
-                                                    public void actionPerformed(ActionEvent e) {
-                                                        int req = JOptionPane.showConfirmDialog(BackVocalFrame.this,
-                                                                "Очистить выбранный плейлист?", "Подтверждение:", JOptionPane.OK_OPTION);
-                                                        if (req == 0) {
-                                                            Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "Clearing the playlist " + getSelectedItem().getName());
-                                                            getSelectedItem().getPlayPane().clearTracks();
-                                                        }
-                                                    }
-                                                });
-                                            }
-                                        };
-
-                                        playProgress = new JProgressBar(0, 0, 100) {
-                                            {
-                                                setFont(btnsFont);
-                                                setStringPainted(true);
-                                            }
-                                        };
-
-                                        nowPlayedLabel = new JLabel() {
-                                            {
-                                                setFont(headersFontSmall);
-                                                setForeground(Color.WHITE);
-                                            }
-                                        };
-
-                                        add(bindListBtn);
-                                        add(clearBindBtn);
-                                        add(new JSeparator(1));
-                                        add(playProgress);
-                                        add(new JSeparator(1));
-                                        add(nowPlayedLabel);
-                                    }
-                                };
-
-                                add(downBtnsPane);
-                            }
-                        };
-
-                        add(toolBar, BorderLayout.NORTH);
-                        add(playDateScroll, BorderLayout.CENTER);
-                        add(downPane, BorderLayout.SOUTH);
-                    }
-                };
+                rightInfoPane = new RightInfoPanel();
+                downShedulePane = new DownSchedulePanel();
 
                 add(playListsScroll, BorderLayout.CENTER);
                 add(rightInfoPane, BorderLayout.EAST);
@@ -368,122 +99,31 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
         addComponentListener(this);
 
         Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "Show the frame...");
-        pack();
         setVisible(true);
-        setLocationRelativeTo(null);
 
         loadDays();
+        DayCore.execute();
 
-        setMinimumSize(new Dimension(dayItems[0].getWidth() * 7 + 6, 600));
-        setLocationRelativeTo(null);
-        repaint();
-
-        runExecutors();
-    }
-
-    private void runExecutors() {
-        try {
-            String today = weakday.format(new Date());
-            Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "Starting the Executors...");
-
-            executor = Executors.newFixedThreadPool(2);
-            executor.execute(() -> {
-                while(!executor.isShutdown()) {
-                    try {
-                        for (PlayDataItemMy weakdayItem : getWeekdayItems()) {
-                            if (!weakdayItem.getName().equalsIgnoreCase(today)) {
-                                continue;
-                            }
-
-                            if (!weakdayItem.inSchedulingTimeAccept()) {
-                                if (weakdayItem.isPlayed()) {
-                                    weakdayItem.stop();
-                                    weakdayItem.repaint();
-                                    JOptionPane.showConfirmDialog(BackVocalFrame.this,
-                                            "<html><b>Время вышло!</b>" +
-                                                    "<br>Воспроизведение '" + weakdayItem.getName() + "' остановлено.",
-                                            "Time-out:",
-                                            JOptionPane.DEFAULT_OPTION);
-                                }
-                            } else {
-                                if (weakdayItem.getPlayPane().isEmpty()) {
-                                    continue;
-                                }
-
-                                if (!weakdayItem.isPlayed() && !weakdayItem.isPaused() && !weakdayItem.isHandStopped()) {
-                                    weakdayItem.play();
-                                    weakdayItem.setSelected(true);
-                                }
-                            }
-
-                        }
-                    } catch (Exception e) {
-                        Out.Print(getClass(), Out.LEVEL.WARN, "Exception into play executor: " + e.getMessage());
-                        e.printStackTrace();
-                    }
-
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        Out.Print(BackVocalFrame.class, Out.LEVEL.WARN, "Play executor was interrupted incorrectly.");
-                        Thread.currentThread().interrupt();
-                    }
-                }
-                Out.Print(BackVocalFrame.class, Out.LEVEL.ACCENT, "Play executor ended.");
-            });
-            executor.execute(() -> {
-                Out.Print(BackVocalFrame.class, Out.LEVEL.INFO, "== Launch time is: <" + sdf.format(System.currentTimeMillis() - MainClassMy.getStartTime()) + "> ==");
-                while(!executor.isShutdown()) {
-                    try {
-                        for (PlayDataItemMy weakdayItem : getWeekdayItems()) {
-                            if (!weakdayItem.getName().equalsIgnoreCase(today)) {
-                                continue;
-                            }
-
-                            String time;
-                            ArrayList<AlarmItem> ail = weakdayItem.getAlarmData();
-                            for (AlarmItem s : ail) {
-                                if (s.isWasPlayed()) {
-                                    continue;
-                                }
-
-                                time = s.getTime();
-                                if (weakdayItem.isTimeCome(time) && weakdayItem.inSchedulingTimeAccept()) {
-                                    weakdayItem.pause();
-                                    weakdayItem.playAlarm(s.getTrack());
-                                    s.wasPlayed(true);
-                                    while (weakdayItem.alarmThreadIsAlive()) {
-                                        Thread.yield();
-                                    }
-                                    weakdayItem.resume();
-                                }
-                            }
-
-                        }
-
-                    } catch (Exception e) {
-                        Out.Print(getClass(), Out.LEVEL.WARN, "Exception into alarms executor: " + e.getMessage());
-                        e.printStackTrace();
-                    }
-
-                    currentTime.setText("<html>Now: <b color='YELLOW'>" + sdf.format(System.currentTimeMillis()) + "</b></html>");
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        Out.Print(BackVocalFrame.class, Out.LEVEL.WARN, "Alarms executor was interrupted incorrectly.");
-                        Thread.currentThread().interrupt();
-                    }
-                }
-                Out.Print(BackVocalFrame.class, Out.LEVEL.ACCENT, "Alarms executor ended.");
-            });
-        } catch (Exception e) {
-            Out.Print(getClass(), Out.LEVEL.WARN, "Executors loading exception: " + e.getMessage());
-            e.printStackTrace();
+        Component ei = DayCore.getDayItem(0);
+        while (ei.getWidth() <= 10) {
+            System.out.println(ei.getWidth());
         }
+        setMinimumSize(new Dimension(ei.getWidth() * 7 + 6, 600));
+        setLocationRelativeTo(null);
+
+        InputAction.add("frame", frame);
+        InputAction.set("frame", "deleteRow", KeyEvent.VK_DELETE, 0, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (e.getID() == 1001) {
+                    removeRow();
+                }
+            }
+        });
     }
 
     public static void resetDownPaneSelect() {
-        for (PlayDataItemMy comp : getWeekdayItems()) {
+        for (PlayDataItem comp : getWeekdayItems()) {
             comp.setSelected(false);
         }
     }
@@ -494,83 +134,14 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
         if (playpane != null) {
             centerPlaylistsPane.add(new JLabel(playpane.getName() + "`s playlist:") {{
                 setBorder(new EmptyBorder(6, 6, 3, 0));
-                setFont(headersFontSmall);
+                setFont(Registry.headersFontSmall);
                 setForeground(Color.WHITE);
             }}, BorderLayout.NORTH);
             centerPlaylistsPane.add(playpane, BorderLayout.CENTER);
-//            Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "The playlist named '" + playpane.getName() + "' was added to CENTER.");
         }
 
         playListsScroll.repaint();
         playListsScroll.revalidate();
-    }
-
-    public static ArrayList<PlayDataItemMy> getWeekdayItems() {
-        ArrayList<PlayDataItemMy> result = new ArrayList<>(7);
-
-        for (Component comp : playDatePane.getComponents()) {
-            if (comp instanceof PlayDataItemMy) {
-                result.add((PlayDataItemMy) comp);
-            }
-        }
-
-        return result;
-    }
-
-    public static void updatePlayedLabelText() {
-        new Thread(() -> {
-            try {
-                Thread.sleep(250);
-            } catch (InterruptedException e) {/* IGNORE */}
-
-            List<PlayDataItemMy> played = getSoundedItems();
-            String mes = "<html>Playing: ";
-            for (PlayDataItemMy playItem : played) {
-                mes += "<b color='YELLOW'>" + playItem.getName() + ":</b> '" + playItem.getActiveTrackName() + "' ";
-            }
-
-            nowPlayedLabel.setText(mes);
-            try {
-                setProgress(100 / getSelectedItem().getPlayPane().getRowsCount() * (getSelectedItem().getIndexOfPlayed() + 1));
-            } catch (Exception e) {/* IGNORE 'value / 0' */}
-            centerPlaylistsPane.repaint();
-        }).start();
-    }
-
-    public static void setPlayedLabelText(String mes) {
-        new Thread(() -> {
-            try {
-                Thread.sleep(250);
-            } catch (InterruptedException e) {/* IGNORE */}
-
-            nowPlayedLabel.setText(mes);
-            centerPlaylistsPane.repaint();
-        }).start();
-    }
-
-    public static JFrame getFrame() {
-        return frame;
-    }
-
-    public static PlayDataItemMy getSelectedItem() {
-        for (PlayDataItemMy comp : getWeekdayItems()) {
-            if (comp.isSelected()) {
-                return comp;
-            }
-        }
-        return null;
-    }
-
-    private static List<PlayDataItemMy> getSoundedItems() {
-        List<PlayDataItemMy> result = new ArrayList<>();
-
-        for (PlayDataItemMy comp : getWeekdayItems()) {
-            if (comp.isPlayed()) {
-                result.add(comp);
-            }
-        }
-
-        return result;
     }
 
     public static void enableControls(boolean enable) {
@@ -582,25 +153,20 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
             centerPlaylistsPane.removeAll();
             centerPlaylistsPane.repaint();
         }
+        updateGUI();
     }
 
-    public static void updateInfo(ListRow row) {
-        selTrackName.setText("<html> <b color='#00FFFF'>Name:</b> " + row.getPath().toFile().getName().substring(0, row.getPath().toFile().getName().length() - 4));
-        selTrackName.setToolTipText("" + row.getPath().toFile().getName().substring(0, row.getPath().toFile().getName().length() - 4));
-        selTrackPath.setText("<html> <b color='#00FFFF'>Path:</b> " + row.getPath());
-        selTrackPath.setToolTipText("" + row.getPath());
-        try {
-            selTrackDuration.setText("<html> <b color='#00FFFF'>Duration:</b> " + row.getDuration());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        selTrackSize.setText("<html> <b color='#00FFFF'>Size:</b> " + String.format("%.2f", row.getPath().toFile().length() / 1000f / 1000f) + " mb.");
-    }
-
-    private void stateChanged() {
-//        if (trayIcon != null) {
-//            trayIcon.setImage(updatedImage);
-//        }
+    private static void updateGUI() {
+        SwingUtilities.invokeLater(() -> {
+            if (downShedulePane != null && DayCore.getDayItem(0) != null) {
+                int height = toolBar.isShowing() ? maxDownPaneHeight : maxDownPaneHeight - 32;
+                downShedulePane.setPreferredSize(new Dimension(
+                        0,
+                        frame.getHeight() / 2 > height ? height : frame.getHeight() / 2));
+            }
+            playProgress.setPreferredSize(new Dimension(frame.getWidth() / 3, 27));
+            rightInfoPane.setPreferredSize(new Dimension(frame.getWidth() / 4, 0));
+        });
     }
 
     private static void loadDays() {
@@ -611,74 +177,12 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
         playProgress.setString("Load media...");
         playProgress.setIndeterminate(true);
 
-        for (String day : days) {
-            Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "Try to load the day '" + day + "'...");
+        daysCounter = 0;
+        for (String day : DayCore.getDays()) {
+            Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "Try to add the day '" + day + "'...");
 
             try {
-                // META loading:
-                String meta = Files.readString(Paths.get("./resources/scheduler/" + day + ".meta"), StandardCharsets.UTF_8);
-                String[] data = meta.split("NN_");
-
-                dayItems[daysCounter] = new PlayDataItemMy(
-                        day,
-                        data[1].split("_EE")[1],
-                        data[2].split("_EE")[1],
-                        Boolean.parseBoolean(data[3].split("_EE")[1]));
-
-
-                // ALARMS loading:
-                List<String> alarms = Files.lines(Paths.get("./resources/scheduler/" + day + ".alarms"), StandardCharsets.UTF_8).collect(Collectors.toList());
-                for (String alarm : alarms) {
-                    try {
-                        String time = alarm.split(">")[0];
-                        Path track = Paths.get(alarm.split(">")[1]);
-
-                        if (Files.notExists(track)) {
-                            Out.Print(BackVocalFrame.class, Out.LEVEL.WARN, "Alarm file not exist:");
-                        } else {
-                            if (time.length() == 8) {
-                                dayItems[daysCounter].addAlarm(time, track);
-                            } else {
-                                Out.Print(BackVocalFrame.class, Out.LEVEL.WARN, "Time is not correct: " + time);
-                            }
-                        }
-                    } catch (Exception e) {
-                        Out.Print(BackVocalFrame.class, Out.LEVEL.ERROR, "Alarms loading exception: " + e.getMessage());
-                        e.printStackTrace();
-                    }
-                }
-
-
-                // LIST loading:
-                List<String> trackss = Files.lines(Paths.get("./resources/scheduler/" + day + ".list"), StandardCharsets.UTF_8).collect(Collectors.toList());
-                List<Path> tracks = new ArrayList<>();
-                for (String s : trackss) {
-                    tracks.add(Paths.get(s));
-                }
-                dayItems[daysCounter].addTracks(tracks);
-            } catch (IllegalArgumentException iae) {
-                Out.Print(BackVocalFrame.class, Out.LEVEL.ERROR, iae.getMessage());
-                iae.printStackTrace();
-            } catch (ArrayIndexOutOfBoundsException aibe) {
-                Out.Print(BackVocalFrame.class, Out.LEVEL.ERROR, aibe.getMessage());
-                aibe.printStackTrace();
-            } catch (MalformedInputException mie) {
-                Out.Print(BackVocalFrame.class, Out.LEVEL.ERROR, mie.getMessage());
-                mie.printStackTrace();
-            } catch (NoSuchFileException fnf) {
-                Out.Print(BackVocalFrame.class, Out.LEVEL.ERROR, "PlayList for " + day + " is not exist.");
-                dayItems[daysCounter] =
-                        new PlayDataItemMy(
-                                day,
-                                "12:00:00", "12:00:00",
-                                true);
-            } catch (Exception e) {
-                Out.Print(BackVocalFrame.class, Out.LEVEL.ERROR, "Meta loading err: " + e.getMessage());
-                e.printStackTrace();
-            }
-
-            try {
-                playDatePane.add(dayItems[daysCounter]);
+                playDatePane.add(DayCore.getDayItem(daysCounter));
             } catch (Exception e) {
                 Out.Print(BackVocalFrame.class, Out.LEVEL.ERROR, "Is playDatePane`s add err: " + e.getMessage());
                 e.printStackTrace();
@@ -698,14 +202,102 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
         rightInfoPane.setVisible(isInfoShowed);
     }
 
-
-    private static void setProgress(int prog) {
-        if (prog < 0) {
-            prog = 0;
-        } else if (prog > 100) {
-            prog = 100;
+    private static void removeRow() {
+        if (getSelectedItem().getPlayPane().getSelectedIndex() == -1) {
+            return;
         }
-        playProgress.setValue(prog);
+
+        int req = JOptionPane.showConfirmDialog(null,
+                "<html>Удалить трек #" + (getSelectedItem().getPlayPane().getSelectedIndex()+1) + "?<br>" +
+                        "<b>" + (getSelectedItem().getPlayPane().getTrack(getSelectedItem().getPlayPane().getSelectedIndex()).getFileName()) + "</b>",
+                "Уверен?", JOptionPane.WARNING_MESSAGE);
+
+        if (req == 0) {
+            getSelectedItem().removeSelected();
+        }
+    }
+
+    // getters & setters:
+    public static ArrayList<PlayDataItem> getWeekdayItems() {
+        ArrayList<PlayDataItem> result = new ArrayList<>(7);
+
+        for (Component comp : playDatePane.getComponents()) {
+            if (comp instanceof PlayDataItem) {
+                result.add((PlayDataItem) comp);
+            }
+        }
+
+        return result;
+    }
+
+    public static PlayDataItem getSelectedItem() {
+        for (PlayDataItem comp : getWeekdayItems()) {
+            if (comp.isSelected()) {
+                return comp;
+            }
+        }
+        return null;
+    }
+
+    private static List<PlayDataItem> getSoundedItems() {
+        List<PlayDataItem> result = new ArrayList<>();
+
+        for (PlayDataItem comp : getWeekdayItems()) {
+            if (comp.isPlayed()) {
+                result.add(comp);
+            }
+        }
+
+        return result;
+    }
+
+    public static void updateInfo(ListRow row) {
+        selTrackName.setText("<html> <b color='#00FFFF'>Name:</b> " + row.getPath().toFile().getName().substring(0, row.getPath().toFile().getName().length() - 4));
+        selTrackName.setToolTipText("" + row.getPath().toFile().getName().substring(0, row.getPath().toFile().getName().length() - 4));
+        selTrackPath.setText("<html> <b color='#00FFFF'>Path:</b> " + row.getPath());
+        selTrackPath.setToolTipText("" + row.getPath());
+        try {
+            selTrackDuration.setText("<html> <b color='#00FFFF'>Duration:</b> " + row.getDuration());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        selTrackSize.setText("<html> <b color='#00FFFF'>Size:</b> " + String.format("%.2f", row.getPath().toFile().length() / 1000f / 1000f) + " mb.");
+    }
+
+    public static void setPlayedLabelText(String mes) {
+        SwingUtilities.invokeLater(() -> {
+            nowPlayedLabel.setText(mes);
+            centerPlaylistsPane.repaint();
+        });
+    }
+
+    public static void updatePlayedLabelText() {
+        SwingUtilities.invokeLater(() -> {
+            List<PlayDataItem> played = getSoundedItems();
+            String mes = "<html>Playing: ";
+            for (PlayDataItem playItem : played) {
+                mes += "<b color='YELLOW'>" + playItem.getName() + ":</b> '" + playItem.getActiveTrackName() + "' ";
+            }
+
+            nowPlayedLabel.setText(mes);
+            try {
+//                setProgress(100 / getSelectedItem().getPlayPane().getRowsCount() * (getSelectedItem().getIndexOfPlayed() + 1));
+                updateProgress();
+            } catch (Exception e) {/* IGNORE 'value / 0' */}
+            centerPlaylistsPane.repaint();
+        });
+    }
+
+    public static void setCurrentTimeText(String s) {
+        currentTime.setText(s);
+    }
+
+    public static JFrame getFrame() {
+        return frame;
+    }
+
+    private static void updateProgress() {
+        playProgress.setString((getSelectedItem().getPlayPane().getPlayedIndex() + 1) + " из " + getSelectedItem().getPlayPane().getRowsCount());
     }
 
     private void tray() throws AWTException {
@@ -725,32 +317,24 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
 
     private void exit() {
         Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "Try to stop the executors...");
-        executor.shutdown(); //shutdown executor
-
-        try {
-            int maxCycleStopAwait = 3;
-            while (!executor.awaitTermination(3, TimeUnit.SECONDS) && maxCycleStopAwait > 0) {
-                maxCycleStopAwait--;
-                Out.Print(PlayDataItemMy.class, Out.LEVEL.WARN, "Waiting for a stop takes more time than seems...");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        if (!executor.isTerminated()) {
-            Out.Print(PlayDataItemMy.class, Out.LEVEL.ERROR, "Executors can`t stopped, than was killed! It`s bad.");
-            executor.shutdownNow();
-        }
+        DayCore.shutdown();
 
         // saving days:
-        for (PlayDataItemMy wdItem : getWeekdayItems()) {
+        for (PlayDataItem wdItem : getWeekdayItems()) {
             wdItem.saveToFile();
         }
 
-        Out.Print(PlayDataItemMy.class, Out.LEVEL.INFO, "Finish at " + sdf.format(System.currentTimeMillis() - MainClassMy.getStartTime()));
+        Out.Print(PlayDataItem.class, Out.LEVEL.INFO, "Finish at " + DayCore.getFormatted(System.currentTimeMillis() - MainClass.getStartTime()));
         BackVocalFrame.this.dispose();
 
-        Out.close();
-        MainClassMy.exit(CodesMy.OLL_OK);
+        if (DayCore.isShutdowned()) {
+            Out.close();
+            MainClass.exit(Codes.OLL_OK);
+        } else {
+            Out.Print(PlayDataItem.class, Out.LEVEL.WARN, "DayCore cant close the execuros correctly! ");
+            Out.close();
+            MainClass.exit(Codes.NOT_CORRECT_SHUTDOWN);
+        }
     }
 
 
@@ -819,22 +403,267 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
     }
 
     @Override
-    public void componentResized(ComponentEvent e) {
-        SwingUtilities.invokeLater(() -> {
-            if (downShedulePane != null && dayItems[0] != null) {
-                downShedulePane.setPreferredSize(new Dimension(0, frame.getHeight() / 2 > maxDownPaneHeight ? maxDownPaneHeight : frame.getHeight() / 2));
-            }
-            playProgress.setPreferredSize(new Dimension(frame.getWidth() / 3, 27));
-            rightInfoPane.setPreferredSize(new Dimension(frame.getWidth() / 4, 0));
-        });
+    public void componentResized(ComponentEvent e) {updateGUI();}
+    public void componentMoved(ComponentEvent e) {}
+    public void componentShown(ComponentEvent e) {}
+    public void componentHidden(ComponentEvent e) {}
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        int req;
+
+        switch (e.getActionCommand()) {
+            case "fill":
+                req = JOptionPane.showConfirmDialog(null,
+                        "Перестроить лист?", "Уверен?", JOptionPane.WARNING_MESSAGE);
+                if (req == 0) {
+                    fch.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                    fch.setMultiSelectionEnabled(false);
+                    fch.setDialogTitle("Папка с треками:");
+                    FileFilter filter = new FileNameExtensionFilter("MP3 File","mp3");
+                    fch.setFileFilter(filter);
+
+                    int result = fch.showOpenDialog(BackVocalFrame.this);
+                    if (result == JFileChooser.APPROVE_OPTION) {
+                        getSelectedItem().getPlayPane().clearTracks();
+                        getSelectedItem().getPlayPane().setTracks(fch.getSelectedFile());
+                    }
+                }
+                break;
+
+            case "reset":
+                req = JOptionPane.showConfirmDialog(BackVocalFrame.this,
+                        "Очистить выбранный плейлист?", "Подтверждение:", JOptionPane.OK_OPTION);
+                if (req == 0) {
+                    Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "Clearing the playlist " + getSelectedItem().getName());
+                    getSelectedItem().stop();
+                    getSelectedItem().getPlayPane().clearTracks();
+                    getSelectedItem().repaint();
+                }
+                break;
+            default:
+        }
     }
 
-    public void componentMoved(ComponentEvent e) {
+    // subclasses
+    private static class DownSchedulePanel extends JPanel {
+        public DownSchedulePanel() {
+            setLayout(new BorderLayout(0, 0));
+
+            setBackground(Color.BLACK);
+
+            toolBar = new JToolBar("Можно тягать!") {
+                {
+                    setBorder(new EmptyBorder(0, 0, 1, 0));
+
+                    moveUpBtn = new JButton("Поднять") {
+                        {
+                            setBackground(Color.RED);
+                            setForeground(Color.BLUE);
+                            setFont(Registry.btnsFont2);
+                            addActionListener(e -> getSelectedItem().moveSelectedUp());
+                        }
+                    };
+
+                    addTrackBtn = new JButton("+ трек") {
+                        {
+                            setForeground(Color.GREEN.darker());
+                            setFont(Registry.btnsFont2);
+                            addActionListener(e -> {
+                                fch.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                                fch.setMultiSelectionEnabled(true);
+                                fch.setDialogTitle("Выбор треков:");
+                                FileFilter filter = new FileNameExtensionFilter("MP3 File","mp3");
+                                fch.setFileFilter(filter);
+
+                                int result = fch.showOpenDialog(DownSchedulePanel.this);
+                                if (result == JFileChooser.APPROVE_OPTION) {
+                                    ArrayList<Path> res = new ArrayList<>();
+                                    for (File selectedFile : fch.getSelectedFiles()) {
+                                        res.add(selectedFile.toPath());
+                                    }
+                                    getSelectedItem().getPlayPane().setTracks(res);
+                                }
+                            });
+                        }
+                    };
+
+                    removeBtn = new JButton("- трек") {
+                        {
+                            setForeground(Color.RED);
+                            setFont(Registry.btnsFont2);
+                            addActionListener(e -> {
+                                removeRow();
+                            });
+                        }
+                    };
+
+                    moveDownBtn = new JButton("Опустить") {
+                        {
+                            setForeground(Color.BLUE);
+                            setFont(Registry.btnsFont2);
+                            addActionListener(new ActionListener() {
+                                @Override
+                                public void actionPerformed(ActionEvent e) {
+                                    getSelectedItem().moveSelectedDown();
+                                }
+                            });
+                        }
+                    };
+
+                    showInfoBtn = new JButton("Инфо") {
+                        {
+                            setForeground(Color.GRAY);
+                            setFont(Registry.btnsFont2);
+                            addActionListener(new ActionListener() {
+                                @Override
+                                public void actionPerformed(ActionEvent e) {
+                                    isInfoShowed = !isInfoShowed;
+                                    rightInfoPane.setVisible(isInfoShowed);
+                                }
+                            });
+                        }
+                    };
+
+                    add(moveUpBtn);
+                    add(new JLabel(" | "));
+                    add(addTrackBtn);
+                    add(removeBtn);
+                    add(new JLabel(" | "));
+                    add(moveDownBtn);
+                    add(new JLabel(" | "));
+                    add(showInfoBtn);
+                }
+            };
+
+            playDatePane = new JPanel(new GridLayout(1, 7, 1, 0)) {
+                {
+                    setBackground(Color.BLACK);
+                    setBorder(null);
+                }
+            };
+
+            playDateScroll = new JScrollPane(playDatePane) {
+                {
+                    setBorder(null);
+                    setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+                    setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+                    getVerticalScrollBar().setUnitIncrement(16);
+                }
+            };
+
+            JPanel downPane = new JPanel(new BorderLayout()) {
+                {
+                    setOpaque(false);
+                    setBorder(new EmptyBorder(1, 0, 0, 0));
+
+                    downBtnsPane = new JPanel(new FlowLayout(0, 3, 3)) {
+                        {
+                            setBackground(Color.DARK_GRAY);
+                            setBorder(new EmptyBorder(0, 0, 1, 0));
+
+                            bindListBtn = new JButton("Залить из папки") {
+                                {
+                                    setFont(Registry.btnsFont);
+                                    setEnabled(false);
+                                    setFocusPainted(false);
+                                    setBackground(new Color(0.3f, 0.5f, 0.2f, 1.0f));
+                                    setForeground(Color.BLACK);
+                                    setActionCommand("fill");
+                                    addActionListener(alist);
+                                }
+                            };
+
+                            clearBindBtn = new JButton("Сброс листа") {
+                                {
+                                    setFont(Registry.btnsFont);
+                                    setEnabled(false);
+                                    setFocusPainted(false);
+                                    setBackground(new Color(0.5f, 0.2f, 0.2f, 1.0f));
+                                    setForeground(Color.BLACK);
+                                    setActionCommand("reset");
+                                    addActionListener(alist);
+                                }
+                            };
+
+                            playProgress = new JProgressBar(0, 0, 100) {
+                                {
+                                    setFont(Registry.btnsFont);
+                                    setStringPainted(true);
+                                }
+                            };
+
+                            nowPlayedLabel = new JLabel() {
+                                {
+                                    setFont(Registry.headersFontSmall);
+                                    setForeground(Color.WHITE);
+                                }
+                            };
+
+                            add(bindListBtn);
+                            add(clearBindBtn);
+                            add(new JSeparator(1));
+                            add(playProgress);
+                            add(new JSeparator(1));
+                            add(nowPlayedLabel);
+                        }
+                    };
+
+                    add(downBtnsPane);
+                }
+            };
+
+            add(toolBar, BorderLayout.NORTH);
+            add(playDateScroll, BorderLayout.CENTER);
+            add(downPane, BorderLayout.SOUTH);
+        }
     }
 
-    public void componentShown(ComponentEvent e) {
-    }
+    private static class RightInfoPanel extends JPanel {
+        public RightInfoPanel() {
+            setLayout(new GridLayout(18, 1, 0, 0));
+            setBackground(Color.BLACK);
+            setBorder(new EmptyBorder(3, 3, 0, 0));
+            setVisible(false);
 
-    public void componentHidden(ComponentEvent e) {
+            add(new JLabel("<Track info>") {{
+                setForeground(Color.WHITE);
+                setFont(Registry.infoFont0);
+                setHorizontalAlignment(JLabel.CENTER);
+            }});
+            currentTime = new JLabel(DayCore.getFormatted(System.currentTimeMillis())) {{
+                setForeground(Color.WHITE);
+                setFont(Registry.infoFont0);
+                setHorizontalAlignment(JLabel.LEFT);
+            }};
+            add(currentTime);
+            add(new JSeparator());
+
+            selTrackName = new JLabel() {{
+                setForeground(Color.WHITE);
+                setFont(Registry.infoFont0);
+                setHorizontalAlignment(JLabel.LEFT);
+            }};
+            selTrackPath = new JLabel() {{
+                setForeground(Color.WHITE);
+                setFont(Registry.infoFont0);
+                setHorizontalAlignment(JLabel.LEFT);
+            }};
+            selTrackDuration = new JLabel() {{
+                setForeground(Color.WHITE);
+                setFont(Registry.infoFont0);
+                setHorizontalAlignment(JLabel.LEFT);
+            }};
+            selTrackSize = new JLabel() {{
+                setForeground(Color.WHITE);
+                setFont(Registry.infoFont0);
+                setHorizontalAlignment(JLabel.LEFT);
+            }};
+
+            add(selTrackName);
+            add(selTrackPath);
+            add(selTrackDuration);
+            add(selTrackSize);
+        }
     }
 }

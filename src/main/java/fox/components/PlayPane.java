@@ -5,7 +5,7 @@ import fox.utils.CustomList;
 import fox.utils.MyCellRenderer;
 import fox.utils.iPlayList;
 import gui.BackVocalFrame;
-import gui.PlayDataItemMy;
+import gui.PlayDataItem;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,10 +26,10 @@ public class PlayPane extends JPanel implements iPlayList {
     private ArrayList<Path> tracks = new ArrayList<>();
     private DefaultListModel<ListRow> dlm = new DefaultListModel();
     private CustomList<ListRow> playList;
-    private PlayDataItemMy owner;
+    private PlayDataItem owner;
 
 
-    public PlayPane(PlayDataItemMy player) {
+    public PlayPane(PlayDataItem player) {
         this.owner = player;
         setName(player.getName());
         setLayout(new BorderLayout(0,0));
@@ -49,7 +49,6 @@ public class PlayPane extends JPanel implements iPlayList {
         indexGlobalCounter = 1;
         File trackIco = new File("./resources/icons/0.png");
         for (Path path : tracks) {
-//            Out.Print("Was added to playlist the track: " + path, Out.LEVEL.DEBUG);
             try {
                 dlm.addElement(new ListRow(this, indexGlobalCounter, trackIco, path));
                 indexGlobalCounter++;
@@ -85,8 +84,7 @@ public class PlayPane extends JPanel implements iPlayList {
         };
 
         add(playList, BorderLayout.CENTER);
-
-        BackVocalFrame.showPlayList(this);
+//        BackVocalFrame.showPlayList(this);
     }
 
     @Override
@@ -108,8 +106,8 @@ public class PlayPane extends JPanel implements iPlayList {
                 ListRow el = dlm.getElementAt(index);
                 return el.getPath();
             } catch (Exception e) {
-                Out.Print(PlayPane.class, Out.LEVEL.WARN, "Exception: " + e.getMessage());
-                e.printStackTrace();
+                Out.Print(PlayPane.class, Out.LEVEL.WARN, "getTrack(): Exception: " + e.getMessage());
+//                e.printStackTrace();
                 return null;
             }
         }
@@ -240,5 +238,9 @@ public class PlayPane extends JPanel implements iPlayList {
         dlm.clear();
     }
 
-    public PlayDataItemMy getOwner() {return owner;}
+    public PlayDataItem getOwner() {return owner;}
+
+    public boolean isAlarmSounded() {
+        return owner.isAlarmPlayed();
+    }
 }

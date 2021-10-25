@@ -18,12 +18,13 @@ import java.util.Comparator;
 
 public class ListRow extends JPanel implements Comparator<ListRow> {
     private BufferedImage icon;
-
+    private PlayPane owner;
     private String text;
     private Path trackPath;
     private int count;
 
     public ListRow(PlayPane owner, int count, File iconFile, Path trackPath) {
+        this.owner = owner;
         try {icon = ImageIO.read(iconFile);
         } catch (IOException e) {
             Out.Print(ListRow.class, Out.LEVEL.WARN, "Icon of each tracks line not found!");
@@ -73,9 +74,9 @@ public class ListRow extends JPanel implements Comparator<ListRow> {
             ex.printStackTrace();
         }
         int size = h.calculate_framesize();
-        float ms_per_frame = h.ms_per_frame();
-        int maxSize = h.max_number_of_frames(10000);
-        float t = h.total_ms(size);
+//        float ms_per_frame = h.ms_per_frame();
+//        int maxSize = h.max_number_of_frames(10000);
+//        float t = h.total_ms(size);
         long tn = 0;
         try {
             tn = file.getChannel().size();
@@ -92,4 +93,6 @@ public class ListRow extends JPanel implements Comparator<ListRow> {
 
         return (hrs.length() < 2 ? "0" + hrs : hrs) + ":" + (mins.length() < 2 ? "0" + mins : mins) + ":" + secs;
     }
+
+    public PlayPane getOwner() {return owner;}
 }

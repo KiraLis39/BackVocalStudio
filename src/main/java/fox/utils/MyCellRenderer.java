@@ -48,16 +48,20 @@ public class MyCellRenderer extends JPanel implements ListCellRenderer {
         }
 
         label.setIcon(new ImageIcon(ico));
-        label.setText("<html><b>(" + ((ListRow) value).getCount() + ")</b> " + ((ListRow) value).getText());
+        label.setText("<html><b>[" + ((ListRow) value).getCount() + "]</b> " + ((ListRow) value).getText());
         if (isSelected) {
             label.setBackground(Color.GRAY);
             label.setForeground(Color.WHITE);
             label.setFont(trackSelectedFont);
 
-            int ind = ((CustomList)list).getPlayedRowIndex();
+            int ind = ((CustomList) list).getPlayedRowIndex();
             if (((ListRow) value).getCount() - 1 == ind) {
                 label.setForeground(Color.CYAN);
             }
+        } else if (((ListRow) value).getOwner().isAlarmSounded()) {
+            label.setBackground(Color.ORANGE);
+            label.setForeground(Color.WHITE);
+            label.setFont(trackSelectedFont);
         } else {
             label.setBackground(list.getBackground());
             label.setForeground(Color.WHITE);

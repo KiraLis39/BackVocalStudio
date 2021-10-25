@@ -13,10 +13,7 @@ public class AlarmItem {
         this.track = alarmFilePath;
     }
 
-    public String getTime() {
-        return time;
-    }
-
+    public String getTime() {return time;}
     public void setTime(String time) {
         this.time = time;
     }
@@ -24,7 +21,6 @@ public class AlarmItem {
     public Path getTrack() {
         return track;
     }
-
     public void setTrack(Path track) {
         this.track = track;
     }
@@ -37,7 +33,5 @@ public class AlarmItem {
     public void wasPlayed(boolean wasPlayed) {
         this.wasPlayed = wasPlayed;
     }
-
-    public boolean isWasPlayed() {return this.wasPlayed;
-    }
+    public boolean isWasPlayed() {return this.wasPlayed;}
 }
