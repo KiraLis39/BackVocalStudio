@@ -48,7 +48,7 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
 
     private boolean isSelected = false, repeat, isOver, isPlaying, isHandStopped = false, alarmIsPlayed = false;
     private Thread musicThread, alarmThread;
-    private int pausedOnFrame, indexOfPlayed;
+    private int indexOfPlayed;
 
     private DefaultListModel<AlarmItem> arm = new DefaultListModel();
     private JList<AlarmItem> alarmList;
@@ -567,7 +567,7 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
 
         try {
             player.close();
-            pausedOnFrame = player.getPosition();
+//            pausedOnFrame = player.getPosition();
         } catch (Exception e) {/* IGNORE BY NOW */}
 
         try {
@@ -591,10 +591,11 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
         BackVocalFrame.setPlayedLabelText("<html><b color='RED'>Alarm:</b> " + alarmFilePath.toFile().getName());
 
         alarmThread = new Thread(() -> {
+            alarmIsPlayed = true;
+            BackVocalFrame.getFrame().repaint();
+
             try {
                 URI uri = alarmFilePath.toFile().toURI();
-                alarmIsPlayed = true;
-                BackVocalFrame.getFrame().repaint();
                 try (
                         InputStream s = uri.toURL().openStream();
                         BufferedInputStream mp3 = new BufferedInputStream(s)) {
@@ -800,6 +801,8 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
                                         String now = LocalDateTime.now().toString().split("T")[1].split("\\.")[0];
                                         String alarmInitTime = JOptionPane.showInputDialog(AlarmsDialog.this,
                                                         "Старт в:", now);
+                                        if (alarmInitTime.isBlank()) {return;}
+
                                         alarmInitTime = alarmInitTime.trim();
 
                                         fch.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -929,6 +932,13 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
                 break;
 
             case "stop":
+                if (isAlarmPlayed()) {
+                    stop();
+                    BackVocalFrame.resetDownPaneSelect();
+                    setSelected(true);
+                    play(-1);
+                    return;
+                }
                 isHandStopped = true;
                 stop();
                 BackVocalFrame.resetDownPaneSelect();

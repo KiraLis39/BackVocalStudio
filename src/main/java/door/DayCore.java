@@ -13,6 +13,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -122,6 +123,9 @@ public class DayCore {
         } catch (Exception e) {
             Out.Print(DayCore.class, Out.LEVEL.WARN, "Executors loading exception: " + e.getMessage());
             e.printStackTrace();
+            JOptionPane.showConfirmDialog(null,
+                    "Ошибка при работе\nэкзекьюторов:\n" + e.getMessage(), "Ошибка!",
+                    JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -134,6 +138,10 @@ public class DayCore {
                     for (PlayDataItem weakdayItem : BackVocalFrame.getWeekdayItems()) {
                         if (!weakdayItem.getName().equalsIgnoreCase(weakday.format(new Date()))) {
                             continue;
+                        }
+
+                        if (weakdayItem.isAlarmPlayed()) {
+                            BackVocalFrame.getFrame().repaint();
                         }
 
                         if (!weakdayItem.inSchedulingTimeAccept()) {
@@ -152,7 +160,7 @@ public class DayCore {
                             }
 
                             if (!weakdayItem.isPlayed() && !weakdayItem.isHandStopped() && !weakdayItem.isAlarmPlayed()) {
-                                weakdayItem.play(0);
+                                weakdayItem.play(-1);
                                 weakdayItem.setSelected(true);
                             }
                         }
@@ -161,12 +169,19 @@ public class DayCore {
                 } catch (Exception e) {
                     Out.Print(DayCore.class, Out.LEVEL.WARN, "Exception into play executor: " + e.getMessage());
                     e.printStackTrace();
+                    JOptionPane.showConfirmDialog(null,
+                            "Ошибка при работе\nконтроллера воспроизведения:\n" + e.getMessage(), "Ошибка!",
+                            JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE);
                 }
 
-                try {Thread.sleep(1000);
+                try {
+                    Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     Out.Print(DayCore.class, Out.LEVEL.WARN, "Play executor was interrupted incorrectly.");
                     Thread.currentThread().interrupt();
+                } catch (Exception e) {
+                    Out.Print(DayCore.class, Out.LEVEL.WARN, "Play executor has exception: " + e.getMessage());
+                    e.printStackTrace();
                 }
             }
 
@@ -179,33 +194,33 @@ public class DayCore {
             Out.Print(DayCore.class, Out.LEVEL.INFO, "== Launch time is: <" + sdf.format(System.currentTimeMillis() - MainClass.getStartTime()) + "> ==");
             while(!executor.isShutdown()) {
                 try {
+                    AlarmItem nextAlarm = null;
+
                     for (PlayDataItem weekdayItem : BackVocalFrame.getWeekdayItems()) {
-                        if (!weekdayItem.getName().equalsIgnoreCase(weakday.format(new Date()))) {
-                            continue;
-                        }
+                        if (!weekdayItem.getName().equalsIgnoreCase(LocalDateTime.now().getDayOfWeek().name())) {continue;}
 
-                        ArrayList<AlarmItem> ail = weekdayItem.getAlarmData();
-                        for (AlarmItem s : ail) {
-                            if (s.isWasPlayed()) {
-                                continue;
-                            }
-
+                        for (AlarmItem s : weekdayItem.getAlarmData()) {
+                            if (s.isWasPlayed()) {continue;}
                             if (weekdayItem.isTimeCome(s.getTime()) && weekdayItem.inSchedulingTimeAccept()) {
-                                weekdayItem.stop();
-                                weekdayItem.playAlarm(s.getTrack());
-                                s.wasPlayed(true);
-                                while (weekdayItem.alarmThreadIsAlive()) {
-                                    Thread.yield();
-                                }
-                                weekdayItem.play(-1);
+                                nextAlarm = s;
+                                break;
                             }
                         }
 
+                        if (nextAlarm != null) {
+                            weekdayItem.stop();
+                            weekdayItem.playAlarm(nextAlarm.getTrack());
+                            nextAlarm.wasPlayed(true);
+                            break;
+                        }
                     }
 
                 } catch (Exception e) {
                     Out.Print(DayCore.class, Out.LEVEL.WARN, "Exception into alarms executor: " + e.getMessage());
                     e.printStackTrace();
+                    JOptionPane.showConfirmDialog(null,
+                            "Ошибка при работе\nконтроллера оповещений:\n" + e.getMessage(), "Ошибка!",
+                            JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE);
                 }
 
                 BackVocalFrame.setCurrentTimeText("<html>Now: <b color='YELLOW'>" + sdf.format(System.currentTimeMillis()) + "</b></html>");
@@ -214,6 +229,9 @@ public class DayCore {
                 } catch (InterruptedException e) {
                     Out.Print(DayCore.class, Out.LEVEL.WARN, "Alarms executor was interrupted incorrectly.");
                     Thread.currentThread().interrupt();
+                } catch (Exception e) {
+                    Out.Print(DayCore.class, Out.LEVEL.WARN, "Alarms executor has exception: " + e.getMessage());
+                    e.printStackTrace();
                 }
             }
 
@@ -229,6 +247,7 @@ public class DayCore {
     public static void shutdown() {
         if (executor == null) {return;}
 
+        Out.Print(PlayDataItem.class, Out.LEVEL.ACCENT, "Executors shutting down...");
         executor.shutdown(); //shutdown executor
 
         try {

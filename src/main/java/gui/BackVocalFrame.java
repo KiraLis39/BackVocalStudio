@@ -7,6 +7,7 @@ import fox.components.PlayPane;
 import fox.fb.FoxFontBuilder;
 import fox.ia.InputAction;
 import fox.out.Out;
+import fox.render.FoxRender;
 import registry.Codes;
 import registry.Registry;
 import javax.imageio.ImageIO;
@@ -16,6 +17,7 @@ import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -39,27 +41,65 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
     private static int daysCounter = 0, maxDownPaneHeight = 220;
     private static boolean isInfoShowed;
     private static ActionListener alist;
-    private static String alSt = "*** Воспроизведение оповещения ***\n(жми стоп для прерывания)";
+
+    private static String alSt1 = "*** Воспроизведение оповещения ***";
+    private static String alSt2 = "(жми стоп для прерывания)";
+    private static float alF1, alF2;
+    private static BufferedImage alarmInfo;
 
     @Override
     public void paint(Graphics g) {
         super.paint(g);
+
+        if (getSelectedItem() == null) {return;}
         if (getSelectedItem().isAlarmPlayed()) {
-            g.setFont(Registry.alarmFont0);
-            g.setColor(Color.ORANGE);
-            g.drawString(alSt, (int) (getWidth() / 2 - FoxFontBuilder.getStringWidth(g, alSt) / 2), getHeight() / 2);
+            if (alarmInfo == null) {
+                rebuildAlIn();
+            }
+
+            g.drawImage(alarmInfo, getWidth() / 2 - alarmInfo.getWidth() / 2, getHeight() / 3, BackVocalFrame.this);
         }
+    }
+
+    private void rebuildAlIn() {
+        alarmInfo = new BufferedImage(getWidth() / 3, getHeight() / 6, BufferedImage.TYPE_INT_ARGB);
+
+        Graphics g = alarmInfo.createGraphics();
+        FoxRender.setMedRender((Graphics2D) g);
+        g.setFont(Registry.alarmFont0);
+
+        alF1 = FoxFontBuilder.getStringWidth(g, alSt1).intValue();
+        alF2 = FoxFontBuilder.getStringWidth(g, alSt2).intValue();
+
+        int y = alarmInfo.getHeight() / 2;
+        int x1 = (int) (alarmInfo.getWidth() / 2 - alF1 / 2);
+        int x2 = (int) (alarmInfo.getWidth() / 2 - alF2 / 2);
+
+        g.setColor(Color.DARK_GRAY);
+        g.fillRoundRect(1,1, alarmInfo.getWidth() - 2, alarmInfo.getHeight() - 2,16, 16);
+
+        g.setColor(Color.GRAY);
+        g.drawString(alSt1,x1 - 2, y - 11);
+        g.drawString(alSt2,x2 - 2, y + 11);
+
+        g.setColor(Color.WHITE);
+        g.drawString(alSt1, x1, y - 12);
+        g.drawString(alSt2, x2, y + 12);
+
+        g.dispose();
     }
 
     public BackVocalFrame() {
         frame = this;
         alist = this;
+
         Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "Build the frame...");
 
         try {
             ico = new ImageIcon(ImageIO.read(new File("./resources/icons/0.png")));
             setIconImage(ico.getImage());
         } catch (IOException e) {
+            Out.Print(BackVocalFrame.class, Out.LEVEL.WARN, "Ico image can`t load." + e.getMessage());
             e.printStackTrace();
         }
         setTitle("Back vocal studio v." + Registry.version);
@@ -100,13 +140,13 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
 
         Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "Show the frame...");
         setVisible(true);
+        rebuildAlIn();
 
         loadDays();
-        DayCore.execute();
 
         Component ei = DayCore.getDayItem(0);
         while (ei.getWidth() <= 10) {
-            System.out.println(ei.getWidth());
+            if (ei.getWidth() == 0) {Thread.currentThread().yield();}
         }
         setMinimumSize(new Dimension(ei.getWidth() * 7 + 6, 600));
         setLocationRelativeTo(null);
@@ -120,6 +160,8 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                 }
             }
         });
+
+        DayCore.execute();
     }
 
     public static void resetDownPaneSelect() {
@@ -166,6 +208,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
             }
             playProgress.setPreferredSize(new Dimension(frame.getWidth() / 3, 27));
             rightInfoPane.setPreferredSize(new Dimension(frame.getWidth() / 4, 0));
+            frame.repaint();
         });
     }
 
@@ -186,6 +229,9 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
             } catch (Exception e) {
                 Out.Print(BackVocalFrame.class, Out.LEVEL.ERROR, "Is playDatePane`s add err: " + e.getMessage());
                 e.printStackTrace();
+                JOptionPane.showConfirmDialog(null,
+                        "Не удалось добавить\nдень #" + daysCounter + ":\n" + e.getMessage(), "Ошибка!",
+                        JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE);
             }
 
             daysCounter++;
@@ -331,7 +377,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
             Out.close();
             MainClass.exit(Codes.OLL_OK);
         } else {
-            Out.Print(PlayDataItem.class, Out.LEVEL.WARN, "DayCore cant close the execuros correctly! ");
+            Out.Print(PlayDataItem.class, Out.LEVEL.WARN, "DayCore can`t close the executors correctly! ");
             Out.close();
             MainClass.exit(Codes.NOT_CORRECT_SHUTDOWN);
         }
@@ -347,7 +393,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
     @Override
     public void windowClosing(WindowEvent e) {
         int req = JOptionPane.showConfirmDialog(BackVocalFrame.this,
-                "Are You sure?..", "Save and exit?",
+                "Ты уверен?", "Завершить работу приложения?",
                 JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null);
         if (req == 0) {
             exit();
@@ -520,6 +566,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                                 public void actionPerformed(ActionEvent e) {
                                     isInfoShowed = !isInfoShowed;
                                     rightInfoPane.setVisible(isInfoShowed);
+                                    frame.repaint();
                                 }
                             });
                         }
@@ -639,31 +686,23 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
             add(currentTime);
             add(new JSeparator());
 
-            selTrackName = new JLabel() {{
-                setForeground(Color.WHITE);
-                setFont(Registry.infoFont0);
-                setHorizontalAlignment(JLabel.LEFT);
-            }};
-            selTrackPath = new JLabel() {{
-                setForeground(Color.WHITE);
-                setFont(Registry.infoFont0);
-                setHorizontalAlignment(JLabel.LEFT);
-            }};
-            selTrackDuration = new JLabel() {{
-                setForeground(Color.WHITE);
-                setFont(Registry.infoFont0);
-                setHorizontalAlignment(JLabel.LEFT);
-            }};
-            selTrackSize = new JLabel() {{
-                setForeground(Color.WHITE);
-                setFont(Registry.infoFont0);
-                setHorizontalAlignment(JLabel.LEFT);
-            }};
+            selTrackName = new RightLabel();
+            selTrackPath = new RightLabel();
+            selTrackDuration = new RightLabel();
+            selTrackSize = new RightLabel();
 
             add(selTrackName);
             add(selTrackPath);
             add(selTrackDuration);
             add(selTrackSize);
+        }
+    }
+
+    public static class RightLabel extends JLabel {
+        public RightLabel() {
+            setForeground(Color.WHITE);
+            setFont(Registry.infoFont0);
+            setHorizontalAlignment(JLabel.LEFT);
         }
     }
 }

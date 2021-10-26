@@ -11,7 +11,6 @@ import java.nio.file.Paths;
 import gui.BackVocalFrame;
 import registry.Codes;
 
-
 public class MainClass {
     private static Path[] importantDirs;
     private static Long startTime;
@@ -20,41 +19,43 @@ public class MainClass {
     public static void main(String[] args) {
         startTime = System.currentTimeMillis();
 
-        Thread showLogoThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                UIManager.put("DrawPadUI", "drawpad.BasicDrawPadUI");
-                logo = new JDialog() {
-                    {
-                        setPreferredSize(new Dimension(400, 300));
-                        setTitle("logo");
+        Thread showLogoThread = new Thread(() -> {
+            UIManager.put("DrawPadUI", "drawpad.BasicDrawPadUI");
+            logo = new JDialog() {
+                {
+                    setPreferredSize(new Dimension(400, 300));
+                    setTitle("logo");
+                    setUndecorated(true);
+                    getContentPane().setBackground(Color.black);
 
-                        pack();
-                        setLocationRelativeTo(null);
-                        setVisible(true);
-                    }
-                };
+                    add(new JLabel("(здесь может быть ваша реклама или лого)") {{setHorizontalAlignment(0);setForeground(Color.WHITE);}});
 
-                while (!logo.isVisible()) {
 
+                    pack();
+                    setLocationRelativeTo(null);
+                    setVisible(true);
                 }
+            };
 
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            while (!logo.isVisible()) {
 
-                logo.dispose();
             }
+
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            logo.dispose();
         });
         showLogoThread.start();
 
         try {
-            checkImportantDirectoriesExists();
-
             Out.setEnabled(true);
             Out.setLogsCountAllow(5);
+
+            checkImportantDirectoriesExists();
 
             Out.Print(MainClass.class, Out.LEVEL.INFO, "Start!");
             Out.setErrorLevel(Out.LEVEL.ACCENT);
@@ -69,6 +70,9 @@ public class MainClass {
         } catch (Exception e) {
             Out.Print(MainClass.class, Out.LEVEL.ERROR, "Has error in main: " + e.getMessage());
             e.printStackTrace();
+            JOptionPane.showConfirmDialog(null,
+                    "Что-то пошло не так при\nзапуске программы:\n" + e.getMessage(), "Ошибка!",
+                    JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE);
         }
     }
 

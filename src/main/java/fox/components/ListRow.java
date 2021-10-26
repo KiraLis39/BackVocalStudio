@@ -32,7 +32,6 @@ public class ListRow extends JPanel implements Comparator<ListRow> {
         }
 
         this.trackPath = trackPath;
-//        this.owner = owner;
         this.text = trackPath.toFile().getName();
         this.count = count;
     }

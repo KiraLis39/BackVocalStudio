@@ -59,7 +59,7 @@ public class MyCellRenderer extends JPanel implements ListCellRenderer {
                 label.setForeground(Color.CYAN);
             }
         } else if (((ListRow) value).getOwner().isAlarmSounded()) {
-            label.setBackground(Color.ORANGE);
+            label.setBackground(Color.ORANGE.darker());
             label.setForeground(Color.WHITE);
             label.setFont(trackSelectedFont);
         } else {

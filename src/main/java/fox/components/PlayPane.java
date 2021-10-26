@@ -107,7 +107,6 @@ public class PlayPane extends JPanel implements iPlayList {
                 return el.getPath();
             } catch (Exception e) {
                 Out.Print(PlayPane.class, Out.LEVEL.WARN, "getTrack(): Exception: " + e.getMessage());
-//                e.printStackTrace();
                 return null;
             }
         }
