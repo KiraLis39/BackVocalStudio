@@ -10,6 +10,7 @@ import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.FactoryRegistry;
 import javazoom.jl.player.Player;
 import javazoom.jl.player.advanced.AdvancedPlayer;
+import registry.Registry;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -129,6 +130,7 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
         alarmList = new JList(arm);
 
         setName(name);
+        setFont(Registry.trackSelectedFont);
         this.timerIn = _timerIn;
         this.timerOut = _timerOut;
         this.repeat = _repeat;
@@ -525,12 +527,15 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
                 while (indexOfPlayed < playpane.getRowsCount()) {
                     BackVocalFrame.updatePlayedLabelText();
 
-                    try (BufferedInputStream mp3 = new BufferedInputStream(new FileInputStream(playpane.getTrack(indexOfPlayed).toFile()))) {
+                    File playFile = playpane.getTrack(indexOfPlayed).toFile();
+                    try (BufferedInputStream mp3 = new BufferedInputStream(new FileInputStream(playFile))) {
                         isPlaying = true;
                         player = new Player(mp3, FactoryRegistry.systemRegistry().createAudioDevice());
                         player.play();
                     } catch (Exception e) {
+                        Out.Print(PlayDataItem.class, Out.LEVEL.WARN, "The track '" + playFile + "' can`t be found.");
                         e.printStackTrace();
+                        playpane.setFallTrack(indexOfPlayed);
                     } finally {
                         try {
                             player.close();

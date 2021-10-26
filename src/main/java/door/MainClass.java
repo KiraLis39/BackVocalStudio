@@ -84,7 +84,7 @@ public class MainClass {
         } catch (Exception e) {
             try {UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception e2) {
-                Out.Print(MainClass.class, Out.LEVEL.WARN, "Has a some problem with a loading UI manager..");
+                Out.Print(MainClass.class, Out.LEVEL.WARN, "Has a some problem with a loading UI manager: " + e2.getMessage());
             }
         }
     }

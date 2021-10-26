@@ -2,6 +2,8 @@ package fox.utils;
 
 import fox.components.ListRow;
 import fox.fb.FoxFontBuilder;
+import registry.Registry;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -10,7 +12,6 @@ public class MyCellRenderer extends JPanel implements ListCellRenderer {
     private static int cellHeight;
 
     private JButton label;
-    private Font trackSelectedFont = FoxFontBuilder.setFoxFont(FoxFontBuilder.FONT.CONSOLAS, 12, true);
 
     @Override
     public void paintComponent(Graphics g) {
@@ -27,6 +28,7 @@ public class MyCellRenderer extends JPanel implements ListCellRenderer {
             {
                 setHorizontalTextPosition(JButton.RIGHT);
                 setHorizontalAlignment(JButton.LEFT);
+                setFont(Registry.trackSelectedFont);
             }
         };
 
@@ -49,19 +51,29 @@ public class MyCellRenderer extends JPanel implements ListCellRenderer {
 
         label.setIcon(new ImageIcon(ico));
         label.setText("<html><b>[" + ((ListRow) value).getCount() + "]</b> " + ((ListRow) value).getText());
-        if (isSelected) {
-            label.setBackground(Color.GRAY);
-            label.setForeground(Color.WHITE);
-            label.setFont(trackSelectedFont);
+        label.setFont(Registry.trackSelectedFont);
 
-            int ind = ((CustomList) list).getPlayedRowIndex();
-            if (((ListRow) value).getCount() - 1 == ind) {
-                label.setForeground(Color.CYAN);
+        if (isSelected) {
+            if (((ListRow) value).getOwner().isFallTrack(index)) {
+                label.setBackground(Color.PINK);
+                label.setForeground(Color.BLACK);
+            } else {
+                label.setBackground(Color.GRAY);
+                label.setForeground(Color.BLACK);
+
+                int ind = ((CustomList) list).getPlayedRowIndex();
+                if (((ListRow) value).getCount() - 1 == ind) {
+                    label.setBackground(Color.BLACK);
+                    label.setForeground(Color.CYAN);
+                }
             }
+
         } else if (((ListRow) value).getOwner().isAlarmSounded()) {
             label.setBackground(Color.ORANGE.darker());
             label.setForeground(Color.WHITE);
-            label.setFont(trackSelectedFont);
+        } else if (((ListRow) value).getOwner().isFallTrack(index)) {
+            label.setBackground(Color.RED.darker());
+            label.setForeground(Color.WHITE);
         } else {
             label.setBackground(list.getBackground());
             label.setForeground(Color.WHITE);

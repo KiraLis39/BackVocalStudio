@@ -112,6 +112,27 @@ public class PlayPane extends JPanel implements iPlayList {
         }
     }
 
+    public void setFallTrack(int index) {
+        if (index >= dlm.getSize()) {return;}
+
+        try {
+            dlm.getElementAt(index).setFall(true);
+        } catch (Exception e) {
+            Out.Print(PlayPane.class, Out.LEVEL.WARN, "getTrack(): Exception: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public boolean isFallTrack(int index) {
+        if (index >= dlm.getSize()) {return false;}
+
+        try {
+            return dlm.getElementAt(index).isFall();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public int getPlayedIndex() {return owner.getIndexOfPlayed();}
 
     @Override

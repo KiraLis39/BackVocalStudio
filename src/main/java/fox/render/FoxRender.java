@@ -1,5 +1,7 @@
 package fox.render;
 
+import registry.Registry;
+
 import java.awt.*;
 
 
@@ -12,6 +14,7 @@ public class FoxRender {
 		g2D.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
 //		g2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 //		g2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_DEFAULT);
+		g2D.setFont(Registry.trackSelectedFont);
 		return g2D;
 	}
 	

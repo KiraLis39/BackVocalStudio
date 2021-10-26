@@ -115,6 +115,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                 playListsScroll = new JScrollPane(centerPlaylistsPane) {
                     {
                         setBorder(null);
+                        setFont(Registry.trackSelectedFont);
                         getViewport().setBorder(null);
                         getViewport().setBackground(Color.BLACK);
                         setBackground(Color.BLACK);

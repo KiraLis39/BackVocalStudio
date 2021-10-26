@@ -4,6 +4,7 @@ import fox.out.Out;
 import javazoom.jl.decoder.Bitstream;
 import javazoom.jl.decoder.BitstreamException;
 import javazoom.jl.decoder.Header;
+import registry.Registry;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -12,6 +13,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 
@@ -22,6 +24,7 @@ public class ListRow extends JPanel implements Comparator<ListRow> {
     private String text;
     private Path trackPath;
     private int count;
+    private boolean isfall = false;
 
     public ListRow(PlayPane owner, int count, File iconFile, Path trackPath) {
         this.owner = owner;
@@ -34,6 +37,8 @@ public class ListRow extends JPanel implements Comparator<ListRow> {
         this.trackPath = trackPath;
         this.text = trackPath.toFile().getName();
         this.count = count;
+
+        setFont(Registry.trackSelectedFont);
     }
 
     public BufferedImage getImIcon() {return icon;}
@@ -59,6 +64,8 @@ public class ListRow extends JPanel implements Comparator<ListRow> {
     }
 
     public String getDuration() throws IOException {
+        if (Files.notExists(trackPath)) {return "Файл не найден";}
+
         Header h = null;
         FileInputStream file = null;
         try {
@@ -66,16 +73,18 @@ public class ListRow extends JPanel implements Comparator<ListRow> {
         } catch (FileNotFoundException ex) {
             ex.printStackTrace();
         }
+
         Bitstream bitstream = new Bitstream(file);
-        try {
-            h = bitstream.readFrame();
+        try {h = bitstream.readFrame();
         } catch (BitstreamException ex) {
             ex.printStackTrace();
         }
-        int size = h.calculate_framesize();
+
+//        int size = h.calculate_framesize();
 //        float ms_per_frame = h.ms_per_frame();
 //        int maxSize = h.max_number_of_frames(10000);
 //        float t = h.total_ms(size);
+
         long tn = 0;
         try {
             tn = file.getChannel().size();
@@ -94,4 +103,11 @@ public class ListRow extends JPanel implements Comparator<ListRow> {
     }
 
     public PlayPane getOwner() {return owner;}
+
+    public void setFall(boolean isFall) {
+        this.isfall = isFall;
+    }
+    public boolean isFall() {
+        return this.isfall;
+    }
 }
