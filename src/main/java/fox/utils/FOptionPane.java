@@ -22,7 +22,7 @@ public class FOptionPane extends JDialog implements ActionListener {
 
 
     public FOptionPane(String title, String message, TYPE type, BufferedImage ico) {
-        this.type = type;
+        this.type = type == null ? TYPE.DEFAULT : type;
         if (ico != null) {
             this.ico = ico;
         } else {

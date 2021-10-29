@@ -1,7 +1,9 @@
 package gui;
 
 import fox.components.AlarmItem;
+import fox.components.AlarmItemCycle;
 import fox.components.PlayPane;
+import fox.components.iAlarm;
 import fox.ia.InputAction;
 import fox.out.Out;
 import fox.render.FoxRender;
@@ -50,7 +52,10 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
     private int indexOfPlayed;
     private int downButtonsDim = 28;
 
-    private DefaultListModel<AlarmItem> arm = new DefaultListModel();
+    private static int indexCounter = 0;
+    private int index;
+
+    private DefaultListModel<iAlarm> arm = new DefaultListModel();
     private JList<AlarmItem> alarmList;
     private LocalDateTime date;
 
@@ -112,6 +117,9 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
 
     public PlayDataItem(String name, String _timerIn, String _timerOut, Boolean _repeat) {
         alarmList = new JList(arm);
+
+        index = indexCounter;
+        indexCounter++;
 
         setName(name);
         setFont(Registry.trackSelectedFont);
@@ -463,7 +471,7 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
             try (OutputStreamWriter osw = new OutputStreamWriter(
                     new FileOutputStream("./resources/scheduler/" + getName() + ".alarms"), StandardCharsets.UTF_8)) {
                 for (int i = 0; i < arm.size(); i++) {
-                    osw.write(arm.get(i).getTime() + ">" + arm.get(i).getTrack() + "\r\n");
+                    osw.write(arm.get(i).getTime() + ">" + arm.get(i).getTrack() + ">" + arm.get(i).isCycled() + "\r\n");
                 }
             } catch (Exception e) {
                 Out.Print(PlayDataItem.class, Out.LEVEL.WARN, "PlayDataItem cant reached save to .alarms: " + e.getMessage());
@@ -681,13 +689,17 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
 
     public PlayPane getPlayPane() {return playpane;}
 
-    public void addAlarm(String time, Path track) {
-        arm.addElement(new AlarmItem(time, track));
+    public void addAlarm(String time, Path track, Boolean isCycled) {
+        if (isCycled) {
+            arm.addElement(new AlarmItemCycle(time, track));
+        } else {
+            arm.addElement(new AlarmItem(time, track));
+        }
         alarmsBack = Color.GREEN;
     }
 
-    public ArrayList<AlarmItem> getAlarmData() {
-        ArrayList<AlarmItem> result = new ArrayList<>();
+    public ArrayList<iAlarm> getAlarmData() {
+        ArrayList<iAlarm> result = new ArrayList<>();
 
         for (int i = 0; i < arm.size(); i++) {
             result.add(arm.get(i));
@@ -730,24 +742,43 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
         return true;
     }
 
-    public boolean isTimeCome(String timeNotParsed) {
-        String time = "";
-        String[] timeNotParsedArr = timeNotParsed.split(":");
-        for (String s : timeNotParsedArr) {
-            if (s.length() == 1) {s = "0" + s;}
-            time += s;
-        }
-
+    public boolean isTimeCome(iAlarm alarm) {
         String nowTime = LocalDateTime.now().toString();
-        int now = Integer.parseInt(nowTime.split("T")[1].split("\\.")[0].replaceAll(":", ""));
-        int need = Integer.parseInt(time);
-//        System.out.println("Now: " + now + "; Need: " + need);
+        String lastTime;
 
-        if (now > need && now - need < 100) {
-            return true;
+        if (alarm.getTime().startsWith("R")) {
+            AlarmItemCycle tmp = (AlarmItemCycle) alarm;
+            lastTime = tmp.getStartTime().toString();
+
+            int now = Integer.parseInt(nowTime.split("T")[1].split("\\.")[0].replaceAll(":", ""));
+            int last = Integer.parseInt(lastTime.split("T")[1].split("\\.")[0].replaceAll(":", ""));
+            int need = last + Integer.parseInt(tmp.getTime().replace("R", "") + "00");
+            System.out.println("NOW: " + now + "; NEED: " + need);
+            if (now > need) {
+                tmp.resetStartTime();
+                return true;
+            }
+
+            return false;
+        } else {
+            String time = "";
+            String[] timeNotParsedArr = alarm.getTime().split(":");
+            for (String s : timeNotParsedArr) {
+                if (s.length() == 1) {
+                    s = "0" + s;
+                }
+                time += s;
+            }
+
+            int now = Integer.parseInt(nowTime.split("T")[1].split("\\.")[0].replaceAll(":", ""));
+            int need = Integer.parseInt(time);
+
+            if (now > need && now - need < 100) {
+                return true;
+            }
+
+            return false;
         }
-
-        return false;
     }
 
     public int getIndexOfPlayed() {return indexOfPlayed;}
@@ -769,16 +800,24 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
         public AlarmsDialog(JFrame parent) {
             super(parent, "Лист оповещений:", true);
 
-            setMinimumSize(new Dimension(400, 400));
+            setMinimumSize(new Dimension(600, 450));
             setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
             JPanel basePane = new JPanel() {
                 {
-                    setBackground(Color.MAGENTA);
-                    setLayout(new BorderLayout());
+                    setBackground(Color.BLACK);
+                    setLayout(new BorderLayout(3,3));
 
-                    alarmList.setBackground(Color.DARK_GRAY);
+                    alarmList.setBackground(Color.BLACK);
                     alarmList.setForeground(Color.WHITE);
+                    alarmList.setBorder(BorderFactory.createCompoundBorder(
+                            BorderFactory.createTitledBorder(
+                                    BorderFactory.createLineBorder(Color.DARK_GRAY, 2, true),
+                                    "Оповещения:",
+                                    1, 2, Registry.titleFont, Color.WHITE
+                            ),
+                            new EmptyBorder(3,3,3,3)
+                    ));
 
                     JScrollPane centerAlarmsListPane = new JScrollPane(alarmList) {
                         {
@@ -788,7 +827,7 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
 
                     JPanel downButtonsPane = new JPanel(new BorderLayout(3, 0)) {
                         {
-                            setBackground(Color.DARK_GRAY);
+                            setBackground(Color.BLACK);
                             setBorder(new EmptyBorder(0,3,3,3));
 
                             JButton addAlarmBtn = new JButton("+ alarm") {
@@ -797,7 +836,7 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
                                     addActionListener(e -> {
                                         String now = LocalDateTime.now().toString().split("T")[1].split("\\.")[0];
                                         String alarmInitTime = JOptionPane.showInputDialog(AlarmsDialog.this,
-                                                        "Старт в:", now);
+                                                        "Старт в (вводи R10 для повтора каждые 10 мин):", now);
                                         if (alarmInitTime.isBlank()) {return;}
 
                                         alarmInitTime = alarmInitTime.trim();
@@ -812,15 +851,12 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
                                             try {
                                                 alarmFilePath = fch.getSelectedFile().toPath();
 
-                                                if (!alarmInitTime.isBlank() &&
-                                                        alarmInitTime.length() == 8 &&
-                                                        alarmInitTime.contains(":") && !alarmInitTime.contains(";") &&
-                                                        alarmInitTime.split(":").length == 3 &&
-                                                        Integer.parseInt(alarmInitTime.split(":")[0]) < 23 &&
-                                                        Integer.parseInt(alarmInitTime.split(":")[1]) < 59 &&
-                                                        Integer.parseInt(alarmInitTime.split(":")[2]) < 59
-                                                ) {
+                                                int mode = checkAlarmTime(alarmInitTime);
+                                                if (mode == 0) {
                                                     arm.addElement(new AlarmItem(alarmInitTime, alarmFilePath));
+                                                    alarmsBack = Color.GREEN;
+                                                } else if (mode == 1) {
+                                                    arm.addElement(new AlarmItemCycle(alarmInitTime, alarmFilePath));
                                                     alarmsBack = Color.GREEN;
                                                 } else {
                                                     JOptionPane.showConfirmDialog(AlarmsDialog.this, "Ошибка ввода!", "Отменено.", JOptionPane.DEFAULT_OPTION);
@@ -842,6 +878,29 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
 
                             add(addAlarmBtn, BorderLayout.CENTER);
                             add(remAlarmBtn, BorderLayout.EAST);
+                        }
+
+                        private int checkAlarmTime(String alarmInitTime) {
+                            if (alarmInitTime.isBlank()) {return -1;}
+
+                            if (alarmInitTime.length() == 8 &&
+                                    alarmInitTime.contains(":") && !alarmInitTime.contains(";") &&
+                                    alarmInitTime.split(":").length == 3 &&
+                                    Integer.parseInt(alarmInitTime.split(":")[0]) < 23 &&
+                                    Integer.parseInt(alarmInitTime.split(":")[1]) < 59 &&
+                                    Integer.parseInt(alarmInitTime.split(":")[2]) < 59) {
+                                return 0;
+                            } else if (alarmInitTime.startsWith("R")) {
+                                try {
+                                    Integer.parseInt(alarmInitTime.substring(1));
+                                    return 1;
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                    return -1;
+                                }
+                            } else {
+                                return -1;
+                            }
                         }
                     };
 
@@ -874,7 +933,7 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
         }
 
         private void deleteAlarmRequest() {
-            AlarmItem toDelete = alarmList.getSelectedValue();
+            iAlarm toDelete = alarmList.getSelectedValue();
             if (toDelete == null) {return;}
             int req = JOptionPane.showConfirmDialog(AlarmsDialog.this,
                     "Удалить alarm от " + toDelete.getTime() + "?", "Уверен:", JOptionPane.OK_OPTION, JOptionPane.QUESTION_MESSAGE);

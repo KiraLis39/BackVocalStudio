@@ -13,11 +13,6 @@ public class MyCellRenderer extends JPanel implements ListCellRenderer {
 
     private JButton label;
 
-    @Override
-    public void paintComponent(Graphics g) {
-        super.paintComponent(g);
-    }
-
     public MyCellRenderer(int cellHeight) {
         this.cellHeight = cellHeight;
 

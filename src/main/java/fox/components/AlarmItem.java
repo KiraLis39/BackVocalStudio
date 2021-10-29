@@ -3,31 +3,26 @@ package fox.components;
 import java.nio.file.Path;
 
 
-public class AlarmItem {
+public class AlarmItem implements iAlarm {
     private String time;
     private Path track;
     private boolean wasPlayed = false;
 
-    public AlarmItem(String alarmInitTime, Path alarmFilePath) {
-        this.time = alarmInitTime;
-        this.track = alarmFilePath;
+    public AlarmItem(String time, Path path) {
+        this.time = time;
+        this.track = path;
     }
 
     public String getTime() {return time;}
-    public void setTime(String time) {
-        this.time = time;
-    }
 
-    public Path getTrack() {
-        return track;
-    }
-    public void setTrack(Path track) {
-        this.track = track;
-    }
+    public Path getTrack() {return track;}
+
+    @Override
+    public boolean isCycled() {return false;}
 
     @Override
     public String toString() {
-        return time + " >> '" + track.toFile().getName() + "'";
+        return "(" + time + ")  " + track.toFile().getName() + "";
     }
 
     public void wasPlayed(boolean wasPlayed) {
