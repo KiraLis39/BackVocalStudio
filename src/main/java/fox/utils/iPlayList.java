@@ -5,6 +5,7 @@ import java.util.List;
 
 public interface iPlayList {
     int getRowsCount();
+    int[] getSelectedIndexes();
     void selectRow(int rowIndex);
     boolean moveSelectedUp();
     boolean moveSelectedDown();

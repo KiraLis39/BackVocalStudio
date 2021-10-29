@@ -3,7 +3,8 @@ package registry;
 public enum Codes {
     BAD_DB_SAVING(114),
     OLL_OK(0),
-    NOT_CORRECT_SHUTDOWN(22);
+    NOT_CORRECT_SHUTDOWN(22),
+    START_FAILED(34);
 
     private int code;
 

@@ -8,6 +8,7 @@ import fox.fb.FoxFontBuilder;
 import fox.ia.InputAction;
 import fox.out.Out;
 import fox.render.FoxRender;
+import fox.utils.FOptionPane;
 import registry.Codes;
 import registry.Registry;
 import javax.imageio.ImageIO;
@@ -24,19 +25,22 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 
+
 public class BackVocalFrame extends JFrame implements WindowListener, ComponentListener, ActionListener {
     private static TrayIcon trayIcon;
     private static SystemTray tray;
     private static ImageIcon ico;
 
     private static BackVocalFrame frame;
-    private static JPanel basePane, centerPlaylistsPane, playDatePane, downBtnsPane, downShedulePane, rightInfoPane;
+    private static JPanel basePane, northLabelsPane, centerPlaylistsPane, playDatePane, downBtnsPane, downShedulePane, rightInfoPane;
     private static JScrollPane playDateScroll, playListsScroll;
     private static JButton bindListBtn, clearBindBtn, moveUpBtn, moveDownBtn, removeBtn, addTrackBtn, showInfoBtn;
-    private static JLabel nowPlayedLabel, currentTime, selTrackName, selTrackPath, selTrackDuration, selTrackSize;
+    private static JLabel weekdayLabel, nowPlayedLabel, currentTime, selTrackName, selTrackPath, selTrackDuration, selTrackSize;
     private static JProgressBar playProgress;
     private static JFileChooser fch = new JFileChooser("./resources/audio/");
     private static JToolBar toolBar;
+    private static JMenuBar menuBar = new JMenuBar();
+    private static JRadioButtonMenuItem one, two;
 
     private static int daysCounter = 0, maxDownPaneHeight = 220;
     private static boolean isInfoShowed;
@@ -46,6 +50,8 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
     private static String alSt2 = "(жми стоп для прерывания)";
     private static float alF1, alF2;
     private static BufferedImage alarmInfo;
+    private static BufferedImage im, pcIco, mdIco;
+
 
     @Override
     public void paint(Graphics g) {
@@ -62,6 +68,12 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
     }
 
     private void rebuildAlIn() {
+        try {
+            im = ImageIO.read(new File("./resources/icons/help.png"));
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+
         alarmInfo = new BufferedImage(getWidth() / 3, getHeight() / 6, BufferedImage.TYPE_INT_ARGB);
 
         Graphics g = alarmInfo.createGraphics();
@@ -93,8 +105,6 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
         frame = this;
         alist = this;
 
-        Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "Build the frame...");
-
         try {
             ico = new ImageIcon(ImageIO.read(new File("./resources/icons/0.png")));
             setIconImage(ico.getImage());
@@ -108,6 +118,27 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
         basePane = new JPanel(new BorderLayout(1, 3)) {
             {
                 setBackground(Color.BLACK);
+
+                northLabelsPane = new JPanel(new BorderLayout(3,3)) {
+                    {
+                        weekdayLabel = new JLabel() {
+                            {
+                                setBorder(new EmptyBorder(6, 6, 3, 0));
+                                setFont(Registry.headersFontSmall);
+                                setForeground(Color.WHITE);
+                            }
+                        };
+
+                        JPanel indicatorsPane = new JPanel(new FlowLayout(0, 3, 3)) {
+                            {
+
+                            }
+                        };
+
+                        add(weekdayLabel, BorderLayout.WEST);
+                        add(indicatorsPane, BorderLayout.EAST);
+                    }
+                };
 
                 centerPlaylistsPane = new JPanel(new BorderLayout(3, 3)) {
                     {setOpaque(false);}
@@ -128,6 +159,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                 rightInfoPane = new RightInfoPanel();
                 downShedulePane = new DownSchedulePanel();
 
+                add(northLabelsPane, BorderLayout.NORTH);
                 add(playListsScroll, BorderLayout.CENTER);
                 add(rightInfoPane, BorderLayout.EAST);
                 add(downShedulePane, BorderLayout.SOUTH);
@@ -136,21 +168,20 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
 
         add(basePane);
 
+        try {buildMenuBar();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Out.Print(MainClass.class, Out.LEVEL.WARN, "Has a some problem with a loading menu bar: " + e.getMessage());
+        }
+
         addWindowListener(this);
         addComponentListener(this);
 
-        Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "Show the frame...");
-        setVisible(true);
-        rebuildAlIn();
-
         loadDays();
 
-        Component ei = DayCore.getDayItem(0);
-        while (ei.getWidth() <= 10) {
-            if (ei.getWidth() == 0) {Thread.currentThread().yield();}
-        }
-        setMinimumSize(new Dimension(ei.getWidth() * 7 + 6, 600));
-        setLocationRelativeTo(null);
+        MainClass.closeLogo();
+        Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "Show the frame...");
+        checkMode();
 
         InputAction.add("frame", frame);
         InputAction.set("frame", "deleteRow", KeyEvent.VK_DELETE, 0, new AbstractAction() {
@@ -162,7 +193,90 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
             }
         });
 
+        selectCurrentDay();
         DayCore.execute();
+    }
+
+    private void checkMode() {
+        setVisible(true);
+
+        Component ei = DayCore.getDayItem(0);
+        while (ei.getWidth() <= 10) {
+            if (ei.getWidth() == 0) {Thread.currentThread().yield();}
+        }
+
+        setMinimumSize(new Dimension(ei.getWidth() * 5 + 18, 600));
+
+        if (one.isSelected()) {
+            setPreferredSize(new Dimension(ei.getWidth() * 7 + 24, Toolkit.getDefaultToolkit().getScreenSize().height));
+            playDatePane.setPreferredSize(null);
+        } else {
+            setPreferredSize(new Dimension(ei.getWidth() * 6 + 21, Toolkit.getDefaultToolkit().getScreenSize().height));
+            playDatePane.setPreferredSize(new Dimension(1024, 0));
+        }
+
+        pack();
+        setLocationRelativeTo(null);
+    }
+
+    private void buildMenuBar() throws IOException {
+        try {
+            pcIco = ImageIO.read(new File("./resources/icons/pc.png"));
+            mdIco = ImageIO.read(new File("./resources/icons/md.png"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        JMenu file = new JMenu("Файл") {
+            {
+                JMenuItem exit = new JMenuItem("Выход") {
+                    {
+                        setIcon(new ImageIcon("images/exit.png"));
+                        addActionListener(e -> exit());
+                    }
+                };
+
+                add(exit);
+            }
+        };
+
+        JMenu view = new JMenu("Вид") {
+            {
+//                JCheckBoxMenuItem grid  = new JCheckBoxMenuItem("angelicalis39@mail.ru");
+
+                ButtonGroup bg = new ButtonGroup();
+                one = new JRadioButtonMenuItem("Режим PC", pcIco == null ? null : new ImageIcon(pcIco), true) {
+                    {
+                        addActionListener(e -> checkMode());
+                    }
+                };
+                two = new JRadioButtonMenuItem("Режим MD", mdIco == null ? null : new ImageIcon(mdIco), false) {
+                    {
+                        addActionListener(e -> checkMode());
+                    }
+                };
+                bg.add(one);
+                bg.add(two);
+
+                add(new JLabel("angelicalis39@mail.ru") {{setBorder(new EmptyBorder(3,12,6,0));}});
+                add(new JSeparator());
+                add(one);
+                add(two);
+            }
+        };
+
+        menuBar.add(file);
+        menuBar.add(view);
+
+        setJMenuBar(menuBar);
+    }
+
+    private void selectCurrentDay() {
+        for (PlayDataItem weekdayItem : getWeekdayItems()) {
+            if (weekdayItem.isToday()) {
+                weekdayItem.setSelected(true);
+            }
+        }
     }
 
     public static void resetDownPaneSelect() {
@@ -175,11 +289,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
         centerPlaylistsPane.removeAll();
 
         if (playpane != null) {
-            centerPlaylistsPane.add(new JLabel(playpane.getName() + "`s playlist:") {{
-                setBorder(new EmptyBorder(6, 6, 3, 0));
-                setFont(Registry.headersFontSmall);
-                setForeground(Color.WHITE);
-            }}, BorderLayout.NORTH);
+            weekdayLabel.setText(playpane.getName() + "`s playlist:");
             centerPlaylistsPane.add(playpane, BorderLayout.CENTER);
         }
 
@@ -254,14 +364,16 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
             return;
         }
 
-        int req = JOptionPane.showConfirmDialog(null,
-                "<html>Удалить трек #" + (getSelectedItem().getPlayPane().getSelectedIndex()+1) + "?<br>" +
-                        "<b>" + (getSelectedItem().getPlayPane().getTrack(getSelectedItem().getPlayPane().getSelectedIndex()).getFileName()) + "</b>",
-                "Уверен?", JOptionPane.WARNING_MESSAGE);
+        int req = new FOptionPane(
+                "Ты уверен?",
+                "Удалить треки\nв количестве " + getSelectedItem().getSelectedIndexes().length + " штук?",
+                FOptionPane.TYPE.YES_NO_TYPE, im)
+                .get();
 
         if (req == 0) {
             getSelectedItem().removeSelected();
         }
+
     }
 
     // getters & setters:
@@ -393,9 +505,12 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
 
     @Override
     public void windowClosing(WindowEvent e) {
-        int req = JOptionPane.showConfirmDialog(BackVocalFrame.this,
-                "Ты уверен?", "Завершить работу приложения?",
-                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null);
+        int req = new FOptionPane(
+                "Ты уверен?",
+                "Завершить работу приложения?",
+                FOptionPane.TYPE.YES_NO_TYPE, im)
+                .get();
+
         if (req == 0) {
             exit();
         }
@@ -461,8 +576,11 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
 
         switch (e.getActionCommand()) {
             case "fill":
-                req = JOptionPane.showConfirmDialog(null,
-                        "Перестроить лист?", "Уверен?", JOptionPane.WARNING_MESSAGE);
+                req = new FOptionPane(
+                        "Ты уверен?",
+                        "Перестроить лист?",
+                        FOptionPane.TYPE.YES_NO_TYPE, im)
+                        .get();
                 if (req == 0) {
                     fch.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                     fch.setMultiSelectionEnabled(false);
@@ -479,8 +597,11 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                 break;
 
             case "reset":
-                req = JOptionPane.showConfirmDialog(BackVocalFrame.this,
-                        "Очистить выбранный плейлист?", "Подтверждение:", JOptionPane.OK_OPTION);
+                req = new FOptionPane(
+                        "Подтверждение:",
+                        "Очистить выбранный плейлист?",
+                        FOptionPane.TYPE.YES_NO_TYPE, im)
+                        .get();
                 if (req == 0) {
                     Out.Print(BackVocalFrame.class, Out.LEVEL.DEBUG, "Clearing the playlist " + getSelectedItem().getName());
                     getSelectedItem().stop();
@@ -584,7 +705,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                 }
             };
 
-            playDatePane = new JPanel(new GridLayout(1, 7, 1, 0)) {
+            playDatePane = new JPanel(new GridLayout(1, 7, 0, 0)) {
                 {
                     setBackground(Color.BLACK);
                     setBorder(null);
@@ -597,6 +718,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
                     setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
                     setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
                     getVerticalScrollBar().setUnitIncrement(16);
+                    getHorizontalScrollBar().setUnitIncrement(96);
                 }
             };
 

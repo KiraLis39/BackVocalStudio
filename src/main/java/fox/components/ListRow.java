@@ -24,7 +24,7 @@ public class ListRow extends JPanel implements Comparator<ListRow> {
     private String text;
     private Path trackPath;
     private int count;
-    private boolean isfall = false;
+    private boolean isFall = false;
 
     public ListRow(PlayPane owner, int count, File iconFile, Path trackPath) {
         this.owner = owner;
@@ -49,10 +49,6 @@ public class ListRow extends JPanel implements Comparator<ListRow> {
     }
 
     public String getText() { return text; }
-
-    public void setText(String text) {
-        this.text = text;
-    }
 
     @Override
     public int compare(ListRow o1, ListRow o2) {
@@ -105,9 +101,9 @@ public class ListRow extends JPanel implements Comparator<ListRow> {
     public PlayPane getOwner() {return owner;}
 
     public void setFall(boolean isFall) {
-        this.isfall = isFall;
+        this.isFall = isFall;
     }
     public boolean isFall() {
-        return this.isfall;
+        return this.isFall;
     }
 }

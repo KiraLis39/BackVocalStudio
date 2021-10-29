@@ -2,10 +2,10 @@ package gui;
 
 import fox.components.AlarmItem;
 import fox.components.PlayPane;
-import fox.fb.FoxFontBuilder;
 import fox.ia.InputAction;
 import fox.out.Out;
 import fox.render.FoxRender;
+import fox.utils.FOptionPane;
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.FactoryRegistry;
 import javazoom.jl.player.Player;
@@ -39,23 +39,19 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
     private JPanel dayControlPane;
     private JLabel dayNameLabel, inLabelH, inLabelM, inLabelS , outLabelH, outLabelM, outLabelS;
     private JCheckBox repeatCBox;
-    private JButton startPlayBtn, nextPlayBtn, stopPlayBtn;
+    private JButton startPlayBtn, nextPlayBtn, stopPlayBtn, alarmsBtn;
+    private JFileChooser fch = new JFileChooser("./resources/audio/");
 
-    private Font btnFont = FoxFontBuilder.setFoxFont(FoxFontBuilder.FONT.ARIAL_NARROW, 14, true);
-    private Font titleFont = FoxFontBuilder.setFoxFont(FoxFontBuilder.FONT.ARIAL, 12, true);
-
-    private Color defBkgColor = Color.GRAY, secondColor, defTextColor = Color.BLACK;
+    private Color defBkgColor = Color.GRAY, secondColor, defTextColor = Color.BLACK, alarmsBack = Color.GRAY;
     private String timerIn = "00:00:00", timerOut = "23:59:59";
 
-    private boolean isSelected = false, repeat, isOver, isPlaying, isHandStopped = false, alarmIsPlayed = false;
     private Thread musicThread, alarmThread;
+    private boolean isSelected = false, repeat, isOver, isPlaying, isHandStopped = false, alarmIsPlayed = false;
     private int indexOfPlayed;
+    private int downButtonsDim = 28;
 
     private DefaultListModel<AlarmItem> arm = new DefaultListModel();
     private JList<AlarmItem> alarmList;
-    private JFileChooser fch = new JFileChooser("./resources/audio/");
-    private JButton alarmsBtn;
-    private Color alarmsBack = Color.GRAY;
     private LocalDateTime date;
 
     @Override
@@ -79,12 +75,12 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
                 }
             }
         }
-        g2D.fillRoundRect(0, 0, getWidth() - 3, getHeight() - 2, 12, 12);
+        g2D.fillRoundRect(0, 0, getWidth() - 2, getHeight() - 2, 12, 12);
 
         if (isSelected) {
             g2D.setStroke(new BasicStroke(2));
             g2D.setColor(Color.GREEN);
-            g2D.drawRoundRect(1,1,getWidth() - 3,getHeight() - 3,9,9);
+            g2D.drawRoundRect(1,1,getWidth() - 4,getHeight() - 4,9,9);
         }
 
         Color justExistColor = new Color(1.0f, 0.8f, 0.25f, 0f);
@@ -114,18 +110,6 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
         recolor();
     }
 
-    private void recolor() {
-        dayNameLabel.setForeground(defTextColor);
-        inLabelM.setForeground(defTextColor);
-        inLabelS.setForeground(defTextColor);
-        inLabelH.setForeground(defTextColor);
-        outLabelH.setForeground(defTextColor);
-        outLabelM.setForeground(defTextColor);
-        outLabelS.setForeground(defTextColor);
-        repeatCBox.setForeground(defTextColor);
-    }
-
-
     public PlayDataItem(String name, String _timerIn, String _timerOut, Boolean _repeat) {
         alarmList = new JList(arm);
 
@@ -143,7 +127,7 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
         setOpaque(false);
         setLayout(new BorderLayout(0,0));
 
-        dayNameLabel = new JLabel(getName()) {{setFont(titleFont); setBorder(new EmptyBorder(3,6,0,0));}};
+        dayNameLabel = new JLabel(getName()) {{setFont(Registry.titleFont); setBorder(new EmptyBorder(3,6,0,0));}};
 
         dayControlPane = new JPanel(new BorderLayout()) {
             {
@@ -295,8 +279,6 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
                         setOpaque(false);
                         setBorder(new EmptyBorder(6,0,0,3));
 
-                        int btnsDim = 28;
-
                         alarmsBtn = new JButton() {
                             BufferedImage im;
 
@@ -346,11 +328,11 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
                                             }
                                         } catch (IOException e) {e.printStackTrace();}
 
-                                        g.drawImage(im, 1, 1, getWidth() - 4, btnsDim, null);
+                                        g.drawImage(im, 1, 1, getWidth() - 3, downButtonsDim, null);
                                     }
 
                                     {
-                                        setFont(btnFont);
+                                        setFont(Registry.btnsFont2);
                                         try {setIcon(new ImageIcon(ImageIO.read(Paths.get("./resources/icons/play.png").toUri().toURL())));
                                         } catch (IOException e) {
                                             e.printStackTrace();
@@ -374,11 +356,11 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
                                     @Override
                                     public void paintComponent(Graphics g) {
                                         if (im != null) {
-                                            g.drawImage(im, 1, 1, getWidth() - 4, btnsDim, null);
+                                            g.drawImage(im, 1, 1, getWidth() - 3, downButtonsDim, null);
                                         } else {super.paintComponent(g);}
                                     }
                                     {
-                                        setFont(btnFont);
+                                        setFont(Registry.btnsFont2);
                                         try {setIcon(new ImageIcon(ImageIO.read(Paths.get("./resources/icons/next.png").toUri().toURL())));
                                         } catch (IOException e) {
                                             e.printStackTrace();
@@ -401,11 +383,11 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
                                     @Override
                                     public void paintComponent(Graphics g) {
                                         if (im != null) {
-                                            g.drawImage(im, 1, 1, getWidth() - 4, btnsDim, null);
+                                            g.drawImage(im, 1, 1, getWidth() - 3, downButtonsDim, null);
                                         } else {super.paintComponent(g);}
                                     }
                                     {
-                                        setFont(btnFont);
+                                        setFont(Registry.btnsFont2);
                                         try {setIcon(new ImageIcon(ImageIO.read(Paths.get("./resources/icons/stop.png").toUri().toURL())));
                                         } catch (IOException e) {
                                             e.printStackTrace();
@@ -429,7 +411,7 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
 
                                 repeatCBox = new JCheckBox("Повтор") {
                                     {
-                                        setFont(btnFont);
+                                        setFont(Registry.btnsFont2);
                                         setForeground(defTextColor);
                                         setSelected(repeat);
                                         addItemListener(new ItemListener() {
@@ -621,6 +603,10 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
         return isHandStopped;
     }
 
+    public void setHandStopped(boolean isHandStopped) {
+        this.isHandStopped = isHandStopped;
+    }
+
     public void addTracks(List<Path> path) {
         try {
             playpane.add(path);
@@ -666,16 +652,18 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
         }
     }
 
-    public void removeSelected() { // indexOfPlayed
-        if (indexOfPlayed == playpane.getSelectedIndex()) {
-            playpane.getOwner().stop();
-        } else {
-            if (indexOfPlayed > playpane.getSelectedIndex()) {
-                indexOfPlayed--;
+    public void removeSelected() {
+        int[] selected = getSelectedIndexes();
+        for (int i = 0; i < selected.length; i++) {
+            if (indexOfPlayed == playpane.getSelectedIndex()) {
+                playpane.getOwner().stop();
+            } else {
+                if (indexOfPlayed > playpane.getSelectedIndex()) {
+                    indexOfPlayed--;
+                }
             }
+            playpane.removeSelected();
         }
-
-        playpane.removeSelected();
     }
 
     public void moveSelectedDown() {
@@ -706,10 +694,6 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
         }
 
         return result;
-    }
-
-    public boolean alarmThreadIsAlive() {
-        return alarmThread.isAlive();
     }
 
     public boolean inSchedulingTimeAccept() {
@@ -769,6 +753,14 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
     public int getIndexOfPlayed() {return indexOfPlayed;}
 
     public boolean isAlarmPlayed() {return alarmIsPlayed;}
+
+    public int[] getSelectedIndexes() {
+        return playpane.getSelectedIndexes();
+    }
+
+    public boolean isToday() {
+        return getName().equalsIgnoreCase(LocalDateTime.now().getDayOfWeek().name());
+    }
 
 
     // subframes:
@@ -921,7 +913,7 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
                     BackVocalFrame.resetDownPaneSelect();
                     setSelected(true);
                 } else {
-                    JOptionPane.showConfirmDialog(PlayDataItem.this, "Время воспроизведения истекло!", "Тайм-аут:", JOptionPane.DEFAULT_OPTION);
+                    new FOptionPane("Тайм-аут:", "Время воспроизведения истекло!", FOptionPane.TYPE.DEFAULT, null);
                 }
                 break;
 
@@ -992,5 +984,16 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
     @Override
     public String toString() {
         return "PDate item '" + getName() + "' (" + playpane.getRowsCount() + " tracks)";
+    }
+
+    private void recolor() {
+        dayNameLabel.setForeground(defTextColor);
+        inLabelM.setForeground(defTextColor);
+        inLabelS.setForeground(defTextColor);
+        inLabelH.setForeground(defTextColor);
+        outLabelH.setForeground(defTextColor);
+        outLabelM.setForeground(defTextColor);
+        outLabelS.setForeground(defTextColor);
+        repeatCBox.setForeground(defTextColor);
     }
 }

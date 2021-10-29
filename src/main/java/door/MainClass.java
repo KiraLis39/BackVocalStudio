@@ -14,14 +14,15 @@ import registry.Codes;
 public class MainClass {
     private static Path[] importantDirs;
     private static Long startTime;
-    private static JDialog logo;
+    private static Thread showLogoThread;
+    private static boolean closeLogoFlag;
 
     public static void main(String[] args) {
         startTime = System.currentTimeMillis();
 
-        Thread showLogoThread = new Thread(() -> {
+        showLogoThread = new Thread(() -> {
             UIManager.put("DrawPadUI", "drawpad.BasicDrawPadUI");
-            logo = new JDialog() {
+            JFrame logo = new JFrame() {
                 {
                     setPreferredSize(new Dimension(400, 300));
                     setTitle("logo");
@@ -30,50 +31,55 @@ public class MainClass {
 
                     add(new JLabel("(здесь может быть ваша реклама или лого)") {{setHorizontalAlignment(0);setForeground(Color.WHITE);}});
 
-
                     pack();
                     setLocationRelativeTo(null);
                     setVisible(true);
                 }
             };
 
-            while (!logo.isVisible()) {
-
-            }
-
             try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
+                while (!closeLogoFlag) {
+                    Thread.sleep(250);
+                }
+            } catch (Exception e) {
                 e.printStackTrace();
+            } finally {
+                logo.dispose();
+                Thread.currentThread().interrupt();
             }
-
-            logo.dispose();
         });
         showLogoThread.start();
 
         try {
             Out.setEnabled(true);
             Out.setLogsCountAllow(5);
-
-            checkImportantDirectoriesExists();
-
-            Out.Print(MainClass.class, Out.LEVEL.INFO, "Start!");
             Out.setErrorLevel(Out.LEVEL.ACCENT);
 
+            checkImportantDirectoriesExists();
+        } catch (Exception e) {
+            Out.Print(MainClass.class, Out.LEVEL.ERROR, "Has error in main: " + e.getMessage());
+            e.printStackTrace();
+            JOptionPane.showConfirmDialog(null,
+                    "Что-то пошло не так при\nинициализации программы:\n" + e.getMessage(), "Ошибка!",
+                    JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE);
+            System.exit(Codes.START_FAILED.code());
+        }
+
+        try {
+            Out.Print(MainClass.class, Out.LEVEL.INFO, "Start!");
             loadUIM();
-
             DayCore.loadDays();
-
-            showLogoThread.join();
-            new BackVocalFrame();
-
         } catch (Exception e) {
             Out.Print(MainClass.class, Out.LEVEL.ERROR, "Has error in main: " + e.getMessage());
             e.printStackTrace();
             JOptionPane.showConfirmDialog(null,
                     "Что-то пошло не так при\nзапуске программы:\n" + e.getMessage(), "Ошибка!",
                     JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE);
+            System.exit(Codes.START_FAILED.code());
         }
+
+        Out.Print(BackVocalFrame.class, Out.LEVEL.INFO, "Build the frame...");
+        new BackVocalFrame();
     }
 
     private static void loadUIM() {
@@ -84,6 +90,7 @@ public class MainClass {
         } catch (Exception e) {
             try {UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception e2) {
+                e2.printStackTrace();
                 Out.Print(MainClass.class, Out.LEVEL.WARN, "Has a some problem with a loading UI manager: " + e2.getMessage());
             }
         }
@@ -113,5 +120,11 @@ public class MainClass {
 
     public static Long getStartTime() {
         return startTime;
+    }
+
+    public static void closeLogo() {
+        if (showLogoThread != null && showLogoThread.isAlive()) {
+            closeLogoFlag = true;
+        }
     }
 }

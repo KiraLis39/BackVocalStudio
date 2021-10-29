@@ -2,6 +2,7 @@ package door;
 
 import fox.components.AlarmItem;
 import fox.out.Out;
+import fox.utils.FOptionPane;
 import gui.BackVocalFrame;
 import gui.PlayDataItem;
 import javax.swing.*;
@@ -25,9 +26,9 @@ public class DayCore {
     private static final String[] days = new String[]{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
     private static final PlayDataItem[] dayItems = new PlayDataItem[7];
     private static final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-    private static final SimpleDateFormat weakday = new SimpleDateFormat("EEEE", Locale.US);
-    private static ExecutorService executor;
-
+//    private static final SimpleDateFormat weekday = new SimpleDateFormat("EEEE", Locale.US);
+    private static ExecutorService executor = Executors.newFixedThreadPool(2);
+    private static short playSleepTime = 1500, alarmSleepTime = 1000;
 
     static void loadDays() {
         Out.Print(DayCore.class, Out.LEVEL.DEBUG, "Loading tracks...");
@@ -117,7 +118,6 @@ public class DayCore {
         Out.Print(DayCore.class, Out.LEVEL.DEBUG, "Starting the Executors...");
 
         try {
-            executor = Executors.newFixedThreadPool(2);
             executor.execute(run01());
             executor.execute(run02());
         } catch (Exception e) {
@@ -133,10 +133,21 @@ public class DayCore {
         return () -> {
             Out.Print(DayCore.class, Out.LEVEL.ACCENT, "Play executor started.");
 
+            try {Thread.sleep(200);
+            } catch (InterruptedException e) {/* IGNORE START PAUSE */}
+
+            String today = LocalDateTime.now().getDayOfWeek().name();
+
             while(!executor.isShutdown()) {
                 try {
                     for (PlayDataItem weakdayItem : BackVocalFrame.getWeekdayItems()) {
-                        if (!weakdayItem.getName().equalsIgnoreCase(weakday.format(new Date()))) {
+                        if (!today.equalsIgnoreCase(LocalDateTime.now().getDayOfWeek().name())) {
+                            today = LocalDateTime.now().getDayOfWeek().name();
+                            weakdayItem.setHandStopped(false);
+                        }
+
+
+                        if (!weakdayItem.getName().equalsIgnoreCase(today)) {
                             continue;
                         }
 
@@ -148,11 +159,9 @@ public class DayCore {
                             if (weakdayItem.isPlayed()) {
                                 weakdayItem.stop();
                                 weakdayItem.repaint();
-                                JOptionPane.showConfirmDialog(null,
-                                        "<html><b>Время вышло!</b>" +
-                                                "<br>Воспроизведение '" + weakdayItem.getName() + "' остановлено.",
-                                        "Time-out:",
-                                        JOptionPane.DEFAULT_OPTION);
+                                new FOptionPane("Время вышло:",
+                                        "Время вышло!\nВоспроизведение '" + weakdayItem.getName() + "' остановлено.",
+                                        FOptionPane.TYPE.DEFAULT, null);
                             }
                         } else {
                             if (weakdayItem.getPlayPane().isEmpty()) {
@@ -175,13 +184,10 @@ public class DayCore {
                 }
 
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(playSleepTime);
                 } catch (InterruptedException e) {
-                    Out.Print(DayCore.class, Out.LEVEL.WARN, "Play executor was interrupted incorrectly.");
+                    Out.Print(DayCore.class, Out.LEVEL.WARN, "Play executor was interrupted incorrectly: " + e.getMessage());
                     Thread.currentThread().interrupt();
-                } catch (Exception e) {
-                    Out.Print(DayCore.class, Out.LEVEL.WARN, "Play executor has exception: " + e.getMessage());
-                    e.printStackTrace();
                 }
             }
 
@@ -191,8 +197,13 @@ public class DayCore {
 
     private static Runnable run02() {
         return () -> {
+            try {Thread.sleep(250);
+            } catch (InterruptedException e) {/* IGNORE START PAUSE */}
+
             Out.Print(DayCore.class, Out.LEVEL.INFO, "== Launch time is: <" + sdf.format(System.currentTimeMillis() - MainClass.getStartTime()) + "> ==");
             while(!executor.isShutdown()) {
+                BackVocalFrame.setCurrentTimeText("<html>Now: <b color='YELLOW'>" + sdf.format(System.currentTimeMillis()) + "</b></html>");
+
                 try {
                     AlarmItem nextAlarm = null;
 
@@ -223,15 +234,11 @@ public class DayCore {
                             JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE);
                 }
 
-                BackVocalFrame.setCurrentTimeText("<html>Now: <b color='YELLOW'>" + sdf.format(System.currentTimeMillis()) + "</b></html>");
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(alarmSleepTime);
                 } catch (InterruptedException e) {
-                    Out.Print(DayCore.class, Out.LEVEL.WARN, "Alarms executor was interrupted incorrectly.");
+                    Out.Print(DayCore.class, Out.LEVEL.WARN, "Alarms executor was interrupted incorrectly: " + e.getMessage());
                     Thread.currentThread().interrupt();
-                } catch (Exception e) {
-                    Out.Print(DayCore.class, Out.LEVEL.WARN, "Alarms executor has exception: " + e.getMessage());
-                    e.printStackTrace();
                 }
             }
 
@@ -240,7 +247,7 @@ public class DayCore {
     }
 
     public static String getFormatted(Long time) {
-        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+//        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
         return sdf.format(time);
     }
 

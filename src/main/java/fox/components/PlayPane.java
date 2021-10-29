@@ -60,16 +60,20 @@ public class PlayPane extends JPanel implements iPlayList {
 
         playList = new CustomList(dlm, PlayPane.this) {
             {
-                setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+//                setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                 setFixedCellHeight(32);
-//              setVisibleRowCount(5);
                 setBackground(Color.DARK_GRAY);
                 setCellRenderer(new MyCellRenderer(32));
                 addMouseListener(new MouseAdapter() {
                     @Override
                     public void mouseClicked(MouseEvent e) {
-                        super.mouseClicked(e);
-                        BackVocalFrame.updateInfo(playList.getSelectedValue());
+                        int count = e.getClickCount();
+                        if (count >= 2) {
+                            owner.stop();
+                            owner.play(playList.getSelectedIndex());
+                        } else {
+                            BackVocalFrame.updateInfo(playList.getSelectedValue());
+                        }
                     }
                 });
                 addKeyListener(new KeyAdapter() {
@@ -84,7 +88,6 @@ public class PlayPane extends JPanel implements iPlayList {
         };
 
         add(playList, BorderLayout.CENTER);
-//        BackVocalFrame.showPlayList(this);
     }
 
     @Override
@@ -143,6 +146,11 @@ public class PlayPane extends JPanel implements iPlayList {
     @Override
     public int getRowsCount() {
         return dlm.size();
+    }
+
+    @Override
+    public int[] getSelectedIndexes() {
+        return playList.getSelectedIndexes();
     }
 
     @Override
