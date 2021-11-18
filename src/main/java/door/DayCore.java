@@ -138,7 +138,7 @@ public class DayCore {
         return () -> {
             Out.Print(DayCore.class, Out.LEVEL.ACCENT, "Play executor started.");
 
-            try {Thread.sleep(200);
+            try {Thread.sleep(250);
             } catch (InterruptedException e) {/* IGNORE START PAUSE */}
 
             String today = LocalDateTime.now().getDayOfWeek().name();
@@ -202,7 +202,7 @@ public class DayCore {
 
     private static Runnable run02() {
         return () -> {
-            try {Thread.sleep(250);
+            try {Thread.sleep(150);
             } catch (InterruptedException e) {/* IGNORE START PAUSE */}
 
             Out.Print(DayCore.class, Out.LEVEL.INFO, "== Launch time is: <" + sdf.format(System.currentTimeMillis() - MainClass.getStartTime()) + "> ==");
@@ -214,10 +214,11 @@ public class DayCore {
 
                     for (PlayDataItem weekdayItem : BackVocalFrame.getWeekdayItems()) {
                         if (!weekdayItem.getName().equalsIgnoreCase(LocalDateTime.now().getDayOfWeek().name())) {continue;}
+                        if (!weekdayItem.inSchedulingTimeAccept()) {continue;}
 
                         for (iAlarm s : weekdayItem.getAlarmData()) {
                             if (s.isWasPlayed()) {continue;}
-                            if (weekdayItem.isTimeCome(s) && weekdayItem.inSchedulingTimeAccept()) {
+                            if (weekdayItem.isTimeCome(s)) {
                                 nextAlarm = s;
                                 break;
                             }

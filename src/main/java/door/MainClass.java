@@ -1,9 +1,13 @@
 package door;
 
 import fox.out.Out;
+
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,20 +20,44 @@ public class MainClass {
     private static Long startTime;
     private static Thread showLogoThread;
     private static boolean closeLogoFlag;
+    private static BufferedImage logoImage;
 
     public static void main(String[] args) {
         startTime = System.currentTimeMillis();
 
+        try {logoImage = ImageIO.read(new File("./logo.png"));
+        } catch (Exception e) {/* IGNORE LOGO LOAD */}
+
         showLogoThread = new Thread(() -> {
             UIManager.put("DrawPadUI", "drawpad.BasicDrawPadUI");
             JFrame logo = new JFrame() {
+                @Override
+                public void paint(Graphics g) {
+                    super.paint(g);
+                    if (logoImage != null) {
+                        g.drawImage(logoImage,
+                                0,0,
+                                400, 300,
+
+                                0,0,
+                                logoImage.getWidth(), logoImage.getHeight(),
+                                null);
+                        g.dispose();
+                    }
+                }
+
                 {
                     setPreferredSize(new Dimension(400, 300));
                     setTitle("logo");
                     setUndecorated(true);
                     getContentPane().setBackground(Color.black);
 
-                    add(new JLabel("(здесь может быть ваша реклама или лого)") {{setHorizontalAlignment(0);setForeground(Color.WHITE);}});
+                    if (logoImage == null) {
+                        add(new JLabel("<html><p align='center'>(здесь может быть ваша реклама или лого)<hr>" +
+                                "<p align='center'>Положите <b>logo.png</b> в папку с программой") {{setHorizontalAlignment(0);setForeground(Color.WHITE);}});
+                    } else {
+                        setBackground(new Color(0,0,0,0));
+                    }
 
                     pack();
                     setLocationRelativeTo(null);
@@ -52,7 +80,7 @@ public class MainClass {
 
         try {
             Out.setEnabled(true);
-            Out.setLogsCountAllow(5);
+            Out.setLogsCountAllow(10);
             Out.setErrorLevel(Out.LEVEL.ACCENT);
 
             checkImportantDirectoriesExists();
@@ -62,12 +90,11 @@ public class MainClass {
             JOptionPane.showConfirmDialog(null,
                     "Что-то пошло не так при\nинициализации программы:\n" + e.getMessage(), "Ошибка!",
                     JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE);
-            System.exit(Codes.START_FAILED.code());
+            Exit.exit(Codes.START_FAILED.code(), "Что-то пошло не так при инициализации программы: " + e.getMessage());
         }
 
         try {
             Out.Print(MainClass.class, Out.LEVEL.INFO, "Start!");
-            loadUIM();
             DayCore.loadDays();
         } catch (Exception e) {
             Out.Print(MainClass.class, Out.LEVEL.ERROR, "Has error in main: " + e.getMessage());
@@ -75,11 +102,17 @@ public class MainClass {
             JOptionPane.showConfirmDialog(null,
                     "Что-то пошло не так при\nзапуске программы:\n" + e.getMessage(), "Ошибка!",
                     JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE);
-            System.exit(Codes.START_FAILED.code());
+            Exit.exit(Codes.START_FAILED.code(), "Что-то пошло не так при инициализации программы: " + e.getMessage());
         }
 
         Out.Print(BackVocalFrame.class, Out.LEVEL.INFO, "Build the frame...");
-        new BackVocalFrame();
+        try {
+            loadUIM();
+            new BackVocalFrame();
+        } catch (Exception e) {
+            Out.Print(MainClass.class, Out.LEVEL.ERROR, "Mail about this error sent to admin: " + e.getMessage());
+            Exit.exit(Codes.RUNTIME_ERR.code(), "Runtime exception: " + e.getMessage()); // #119
+        }
     }
 
     private static void loadUIM() {
@@ -100,7 +133,7 @@ public class MainClass {
         Out.Print(MainClass.class, Out.LEVEL.DEBUG, "Check the important directories...");
         importantDirs = new Path[] {
                 Paths.get("./resources/audio/music"),
-                Paths.get("./resources/audio/sound"),
+                Paths.get("./resources/audio/alarms"),
                 Paths.get("./resources/scheduler/"),
                 Paths.get("./resources/icons/")
         };
@@ -111,11 +144,6 @@ public class MainClass {
             }
         }
 
-    }
-
-    public static void exit(Codes code) {
-        Out.Print(MainClass.class, Out.LEVEL.DEBUG, "Finish with code: " + code);
-        System.exit(code.code());
     }
 
     public static Long getStartTime() {

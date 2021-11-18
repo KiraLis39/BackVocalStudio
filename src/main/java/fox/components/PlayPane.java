@@ -103,6 +103,7 @@ public class PlayPane extends JPanel implements iPlayList {
     @Override
     public Path getTrack(int index) {
         if (index >= dlm.getSize()) {
+            Out.Print(PlayPane.class, Out.LEVEL.WARN, "getTrack() get index: " + index);
             return null;
         } else {
             try {

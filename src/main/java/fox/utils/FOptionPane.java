@@ -18,8 +18,9 @@ public class FOptionPane extends JDialog implements ActionListener {
     private JButton OK_BUTTON;
     private JButton NO_BUTTON, YES_BUTTON;
     private BufferedImage ico;
-    private int answer = -1;
-
+    private int answer = -1, timeout = 20;
+    private static Thread toThread;
+    private static JLabel toLabel;
 
     public FOptionPane(String title, String message, TYPE type, BufferedImage ico) {
         this.type = type == null ? TYPE.DEFAULT : type;
@@ -67,6 +68,12 @@ public class FOptionPane extends JDialog implements ActionListener {
 
                     {
                         setPreferredSize(new Dimension(64, 0));
+                    }
+                };
+
+                toLabel = new JLabel() {
+                    {
+                        setForeground(Color.GRAY);
                     }
                 };
 
@@ -137,12 +144,25 @@ public class FOptionPane extends JDialog implements ActionListener {
                 };
 
                 add(icoPane, BorderLayout.WEST);
+                add(toLabel, BorderLayout.NORTH);
                 add(mesPane, BorderLayout.CENTER);
                 add(btnPane, BorderLayout.SOUTH);
             }
         };
 
         add(basePane);
+
+        toThread = new Thread(() -> {
+            while (timeout > 0) {
+                timeout--;
+                toLabel.setText("Осталось: " + timeout + " сек.");
+                try {Thread.sleep(1000);
+                } catch (InterruptedException e) {e.printStackTrace();}
+            }
+            answer = 1;
+            FOptionPane.this.dispose();
+        });
+        toThread.start();
 
         pack();
         setLocationRelativeTo(null);

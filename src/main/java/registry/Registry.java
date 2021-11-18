@@ -4,7 +4,7 @@ import fox.fb.FoxFontBuilder;
 import java.awt.*;
 
 public class Registry {
-    public static final String version = "0.3.2";
+    public static final String version = "0.3.5.3";
 
     public static final Font headersFontSmall = FoxFontBuilder.setFoxFont(FoxFontBuilder.FONT.ARIAL_NARROW, 14, true);
     public static final Font btnsFont = FoxFontBuilder.setFoxFont(FoxFontBuilder.FONT.ARIAL_NARROW, 14, false);
