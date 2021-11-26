@@ -125,6 +125,9 @@ public class DayCore {
         try {
             executor.execute(run01());
             executor.execute(run02());
+            Out.Print(DayCore.class, Out.LEVEL.ACCENT, "== Launch time is: <" +
+                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - MainClass.getStartTime().get()) + " sec.> =="
+            );
         } catch (Exception e) {
             Out.Print(DayCore.class, Out.LEVEL.WARN, "Executors loading exception: " + e.getMessage());
             e.printStackTrace();
@@ -205,7 +208,6 @@ public class DayCore {
             try {Thread.sleep(150);
             } catch (InterruptedException e) {/* IGNORE START PAUSE */}
 
-            Out.Print(DayCore.class, Out.LEVEL.INFO, "== Launch time is: <" + sdf.format(System.currentTimeMillis() - MainClass.getStartTime()) + "> ==");
             while(!executor.isShutdown()) {
                 BackVocalFrame.setCurrentTimeText("<html>Now: <b color='YELLOW'>" + sdf.format(System.currentTimeMillis()) + "</b></html>");
 

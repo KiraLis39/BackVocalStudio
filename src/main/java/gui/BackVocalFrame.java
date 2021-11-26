@@ -568,7 +568,7 @@ public class BackVocalFrame extends JFrame implements WindowListener, ComponentL
             wdItem.saveToFile();
         }
 
-        Out.Print(PlayDataItem.class, Out.LEVEL.INFO, "Finish at " + DayCore.getFormatted(System.currentTimeMillis() - MainClass.getStartTime()));
+        Out.Print(PlayDataItem.class, Out.LEVEL.INFO, "Finish at " + DayCore.getFormatted(System.currentTimeMillis() - MainClass.getStartTime().get()));
         BackVocalFrame.this.dispose();
 
         if (DayCore.isShutdowned()) {

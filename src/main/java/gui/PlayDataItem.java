@@ -549,6 +549,8 @@ public class PlayDataItem extends JPanel implements MouseListener, ActionListene
                         }
                     }
                 }
+
+                isPlaying = false;
             });
             musicThread.start();
         } catch (Exception e) {

@@ -12,18 +12,22 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.TimeZone;
+import java.util.concurrent.atomic.AtomicLong;
+
 import gui.BackVocalFrame;
 import registry.Codes;
 
 public class MainClass {
     private static Path[] importantDirs;
-    private static Long startTime;
+    private static AtomicLong startTime;
     private static Thread showLogoThread;
     private static boolean closeLogoFlag;
     private static BufferedImage logoImage;
 
     public static void main(String[] args) {
-        startTime = System.currentTimeMillis();
+        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Moscow"));
+        startTime = new AtomicLong(System.currentTimeMillis());
 
         try {logoImage = ImageIO.read(new File("./logo.png"));
         } catch (Exception e) {/* IGNORE LOGO LOAD */}
@@ -110,6 +114,7 @@ public class MainClass {
             loadUIM();
             new BackVocalFrame();
         } catch (Exception e) {
+            e.printStackTrace();
             Out.Print(MainClass.class, Out.LEVEL.ERROR, "Mail about this error sent to admin: " + e.getMessage());
             Exit.exit(Codes.RUNTIME_ERR.code(), "Runtime exception: " + e.getMessage()); // #119
         }
@@ -146,7 +151,7 @@ public class MainClass {
 
     }
 
-    public static Long getStartTime() {
+    public static AtomicLong getStartTime() {
         return startTime;
     }
 

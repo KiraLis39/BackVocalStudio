@@ -12,6 +12,11 @@ public class Exit {
         if (message != null) {
             ErrorSender.send("Exit code #" + code + ">> " + message);
         }
+
+        if (code != 0) {
+            throw new RuntimeException(message);
+        }
+
         System.exit(code);
     }
 }
